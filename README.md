@@ -1,2 +1,2 @@
-# Scanner
-Scanner for Compiler
+# Compiler-Project
+Compiler Project for class
