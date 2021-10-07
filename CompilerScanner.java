@@ -1,4 +1,3 @@
-package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -71,13 +70,13 @@ public class CompilerScanner
                 errorString="ERROR";
                 break;
         }
-         String currentLine;
-         int lineNum=0;
-         while ((currentLine = br.readLine()) != null)   {
-             // Print the content on the console
-             System.out.println(lineNum+" "+currentLine);
-             lineNum++;
-         }
+        // String currentLine;
+        // int lineNum=0;
+        // while ((currentLine = br.readLine()) != null)   {
+        //     // Print the content on the console
+        //     System.out.println(lineNum+" "+currentLine);
+        //     lineNum++;
+        // }
         out.write(errorString + " at line "+line);
         //accepts the error msg and line num
         //prints the msg and exits
@@ -86,14 +85,12 @@ public class CompilerScanner
     }
 
     public String removeSpacesAndComments(String stringPassed){
-    	//System.out.println("String passed before: '" + stringPassed + "'");
         String newString="";
         char currentChar;
         // boolean isBeginComment=false;
         stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
         stringPassed = stringPassed.replaceAll(" ","");
         stringPassed = stringPassed.replaceAll("\n","");
-        stringPassed = stringPassed.replaceAll("\t", "");
         stringPassed = stringPassed.replaceAll("\r","");
         stringPassed = stringPassed.replaceAll("\f","");
         for(int i =0; i<stringPassed.length(); i++){
@@ -104,7 +101,6 @@ public class CompilerScanner
             }
             newString=newString+currentChar;
         }
-        //System.out.println("String passed before: '" + newString + "'");
         return newString;
         //br.readLine(reads the rest of the line) use for comments
 
@@ -161,7 +157,7 @@ public class CompilerScanner
         String buf = "";
         // System.out.println("TEXT: "+(char)br.read());
         do{
-        	buf = buf + ch;
+            buf = buf + ch;
             ch = (char)br.read();//get the next character, ch
             // System.out.println(buf+"-> "+ch);
             state = fsm[state][charClass];
@@ -174,10 +170,8 @@ public class CompilerScanner
                 // System.out.println("LINE INCREASED::"+line);
             }
             br.reset();
-            	System.out.println("Buf = '" + buf + "'    State: '" + state + "'      Char class: '" + charClass + "' ch: '" + ch + "' FSM: '" + fsm[state][charClass] + "'");
+
         }while(fsm[state][charClass] > 0);
-        System.out.println("WE HAVE LEFT THE WHILE LOOP BUILDIN BUF -----------------------------------------------------------------------------------------");
-        //System.out.println("buf:" + buf);
         buf = removeSpacesAndComments(buf);
         if (buf.equals(""))
             throw new Exception("");
@@ -209,9 +203,7 @@ public class CompilerScanner
     }
 
     private int finalState(int state, String buf) {
-    	//System.out.println("Buff before: '" + buf + "'");
         buf = removeSpacesAndComments(buf);
-        //System.out.println("Buff after: '" + buf + "'");
         switch(state){
             case 1://IDENTIFIER, Possible Reserve
                 if (isResWord(buf)){
@@ -232,6 +224,10 @@ public class CompilerScanner
                 System.out.println(", "+T.STRING );
                 return T.STRING;// +", "+buf;//final state STRING
             case 5:
+                if (buf.equals(":=")){
+                    System.out.println(", "+T.ASSIGN);
+                    return T.ASSIGN;
+                }
                 System.out.println(", "+T.COLON);
                 return T.COLON;// +", "+buf;//final state COLON
             case 6:
@@ -298,7 +294,7 @@ public class CompilerScanner
                     return T.PERIOD;// +", "+buf;
                 }
             case 13:
-                 System.out.println("<-- ERROR -- ILLEGAL CHARACTER" + "'" + buf + "'");
+                // System.out.println("<-- ERROR -- ILLEGAL CHARACTER" + buf);
                 return 13;//"Final state, scanner error, character.";
             case 14:
                 // System.out.println("ERROR -- STRING NOT TERMINATED");
