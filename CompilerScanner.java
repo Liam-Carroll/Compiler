@@ -7,7 +7,8 @@ public class CompilerScanner
 {
     private int[][] fsm;//contains the state mappings of the FSM, read from file
     private String[] reserved ={"program","var","integer","bool","procedure","call","begin","end","if","then","else","while","do","and","or","not","read","write","writeln"};
-    private String[] symbols = new String[100];
+    private SymbolTable symbolTable = new SymbolTable();
+    private String[] stringTable = new String[100];
 
     File f;
     FileReader fileReader;
@@ -205,25 +206,6 @@ public class CompilerScanner
         return false;
     }
     
-    /**
-     * storeSymbol
-     * @param symbol = symbol to store
-     * @return returns the index of the symbol in the symbol array
-     */
-    private int storeSymbol(String symbol) {
-    	//System.out.println("Found symbol: " + symbol);
-    	for (int i = 0; i < symbols.length; i++) {
-    		if (symbols[i] == (null)) {
-    			//System.out.println("FIRST EMPTY IS: " + i);
-    			symbols[i] = symbol;
-    			return i;
-    		} else if (symbols[i].equals(symbol)) {
-    			//System.out.println("ALREADY LOCATED IN: " + i);
-    			return i;
-    		}
-    	}
-    	return 999; // ERROR.
-    }
 
     private int finalState(int state, String buf) {
         buf = removeSpacesAndComments(buf);
@@ -239,9 +221,9 @@ public class CompilerScanner
                     return 44;//RESERVED WORD
                 }
                 //NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
-                int location = storeSymbol(buf);
+                int location = symbolTable.insert(buf, 0);
                 //System.out.println("Location of " + buf + "=" + location);
-                System.out.println(", "+ "Location: " + location);
+                System.out.println(", "+ T.IDENTIFIER + "\t" +  "Location: " + location);
                 return T.IDENTIFIER;// +", "+buf;//final state ID
             case 2:
                 System.out.println(", "+T.NUMBER);
