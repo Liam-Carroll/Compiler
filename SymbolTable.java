@@ -1,7 +1,7 @@
 package Scanner;
 
 public class SymbolTable {
-	private SymbolTableObject[] table;
+	public SymbolTableObject[] table;
 	
 	/**
 	 * Default constructor
@@ -36,6 +36,7 @@ public class SymbolTable {
 		for (int i = 0; i < table.length; i++) {
 			if (table[i] == null) {
 				table[i] = newSymbol;
+				System.out.println("success in " + i);
 				return i;
 			}
 			else if (table[i].name.equals(name) && table[i].scope == scope) {

@@ -1,7 +1,7 @@
 package Scanner;
 
 public class StringTable {
-	private String[] table;
+	public String[] table;
 	/**
 	 * Default constructor
 	 */

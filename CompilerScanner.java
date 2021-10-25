@@ -19,7 +19,7 @@ public class CompilerScanner
     int line = 0;
     int state = 0;
 
-    public CompilerScanner(String fileName) throws IOException 
+    public CompilerScanner(String fileName, StringTable stringTable, SymbolTable symbolTable) throws IOException 
     {//Scanner Init
         f = new File(fileName);
         fileReader = new FileReader(f);
@@ -69,6 +69,13 @@ public class CompilerScanner
                 errorString="ERROR -- STRING NOT TERMINATED";
                 break;
                //"Final state, scanner error, character.";
+            case 15:
+            	errorString="ERROR -- EXPECTING PROGRAM";
+            	break;
+            case 16:
+            	errorString="ERROR -- EXPECTING PROGRAM NAME";
+            case 17:
+            	errorString="ERROR -- EXPECTING SEMI";
             default:
                 errorString="ERROR";
                 break;
@@ -312,31 +319,6 @@ public class CompilerScanner
                 // System.out.println("ERROR");
                 return 15;
         }
-    }
-
-    //Debug Main for testing
-    public static void main(String[] args) throws Exception{
-        Scanner input = new Scanner(System.in);
-        System.out.print("Enter program file name: ");
-        String fileName = input.nextLine();
-
-        CompilerScanner scan = new CompilerScanner(fileName);
-
-        Token t = new Token();
-        while(t.tokenType != T.PERIOD ){
-            try{
-                t = scan.nextToken();
-                if (t == null){//error 
-                    break;
-                }
-            }catch (Exception e){
-
-            }
-            
-            
-        }
-        scan.out.close();
-        input.close();
     }
 
 }
