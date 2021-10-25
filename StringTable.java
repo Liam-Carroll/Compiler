@@ -1,30 +1,48 @@
 package Scanner;
 
 public class StringTable {
-    private String[] table;
-
-    public StringTable() {
-        table = new String[100];
-    }
-
-    public int search(String string){
-        for(int i = 0; i < table.length; i++){
-            if(table[i].equals(string))
-                return i;
-        }
-        return -1;
-    }
-
-    public int insert(String string) {
-        for(int i = 0; i < table.length; i ++){
-            if(table[i].equals(string))
-                return i;
-            else if(table[i] == null){
-                table[i] = string;
-                return i;
-            }
-        }//end for 
-        System.out.println("ERROR");
-        return -1;
-    }
+	private String[] table;
+	/**
+	 * Default constructor
+	 */
+	public StringTable() {
+		table = new String[100];
+	}
+	
+	/**
+	 * Search
+	 * @param name = the string to search for
+	 * @param scope = the string scope
+	 * @return location of the string in the table
+	 */
+	public int search(String name) {
+		for (int i = 0; i < table.length; i++) {
+			if (table[i].equals(name)) {
+				return i;
+			}
+		}
+		return -1; // not found in table
+	}
+	
+	/**
+	 * 
+	 * @param name = name of string to store
+	 * @param scope = scope of the string to store
+	 * @return returns the location in the table (may already be stored in table)
+	 */
+	public int insert(String name) {
+		for (int i = 0; i < table.length; i++) {
+			if (table[i] == null) {
+				table[i] = name;
+				return i;
+			}
+			else if (table[i].equals(name)) {
+				//Symbol is already in table, return the index
+				return i;
+			}
+		}
+		System.out.println("ERROR");
+		return -1; // error, could not find empty location or already existing symbol
+	}
+	
 }

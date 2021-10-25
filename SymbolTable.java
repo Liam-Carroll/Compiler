@@ -18,7 +18,7 @@ public class SymbolTable {
 	 */
 	public int search(String name, int scope) {
 		for (int i = 0; i < table.length; i++) {
-			if (table[i].equals(name)) {
+			if (table[i].name.equals(name)) {
 				return i;
 			}
 		}

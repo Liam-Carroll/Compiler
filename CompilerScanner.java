@@ -8,7 +8,7 @@ public class CompilerScanner
     private int[][] fsm;//contains the state mappings of the FSM, read from file
     private String[] reserved ={"program","var","integer","bool","procedure","call","begin","end","if","then","else","while","do","and","or","not","read","write","writeln"};
     private SymbolTable symbolTable = new SymbolTable();
-    private String[] stringTable = new String[100];
+    private StringTable stringTable = new StringTable();
 
     File f;
     FileReader fileReader;
@@ -221,15 +221,16 @@ public class CompilerScanner
                     return 44;//RESERVED WORD
                 }
                 //NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
-                int location = symbolTable.insert(buf, 0);
+                int symbolLocation = symbolTable.insert(buf, 0);
                 //System.out.println("Location of " + buf + "=" + location);
-                System.out.println(", "+ T.IDENTIFIER + "\t" +  "Location: " + location);
+                System.out.println(", "+ T.IDENTIFIER + "\t Symbol Location: " + symbolLocation);
                 return T.IDENTIFIER;// +", "+buf;//final state ID
             case 2:
                 System.out.println(", "+T.NUMBER);
                 return T.NUMBER;// +", "+buf;//final state NUMBER
             case 4:
-                System.out.println(", "+T.STRING );
+            	int stringLocation = stringTable.insert(buf);
+                System.out.println(", "+T.STRING + "\t String Location: " + stringLocation);
                 return T.STRING;// +", "+buf;//final state STRING
             case 5:
                 if (buf.equals(":=")){
