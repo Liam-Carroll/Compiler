@@ -1,3 +1,5 @@
+package Scanner;
+
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -25,7 +27,7 @@ public class Parser{
     private void error(String string) {
         System.out.println(string);
     }
-    private void program() {
+    private void program() throws Exception {
         Token firstToken = symbol;
         Token secondToken = s.nextToken();
         Token thirdToken = s.nextToken();
@@ -41,7 +43,7 @@ public class Parser{
             }
         }
     }
-    private void identifier_list() {
+    private void identifier_list() throws Exception {
         if (symbol.tokenType == T.IDENTIFIER){
             symbol = s.nextToken();
             while (symbol.tokenType == T.COMMA){
@@ -74,7 +76,7 @@ public class Parser{
     //LIAM ABOVE THIS
     //BOBERT AND KYLE BELOW THIS
     private void parameter_list() {
-        
+
     }
     private void compound_statement() {
         
@@ -82,11 +84,22 @@ public class Parser{
     private void statement_list() {
         
     }
-    private void statement() {
-        
+    private void statement() throws Exception { // not done
+        if (symbol.tokenType == T.IDENTIFIER) {
+        	assignment_statement();
+        }
+        else if (symbol.tokenType == T.CALL) {
+        	procedure_statement();
+        }
+       
     }
-    private void assignment_statement() {
-        
+    private void assignment_statement() throws Exception {
+    	if (symbol.tokenType == T.IDENTIFIER) {
+    		symbol = s.nextToken();
+    		if (symbol.tokenType == T.ASSIGN) {
+            	expression();
+            }
+    	}
     }
     private void if_statement() {
         
@@ -94,8 +107,20 @@ public class Parser{
     private void while_statement() {
         
     }
-    private void procedure_statement() {
-        
+    private void procedure_statement() throws Exception { // not done
+        if (symbol.tokenType == T.CALL) {
+        	symbol = s.nextToken();
+        	if (symbol.tokenType == T.IDENTIFIER) {
+        		symbol = s.nextToken();
+        		if (symbol.tokenType == T.LPAREN) {
+        			expression_list();
+        			symbol = s.nextToken();
+        			if (symbol.tokenType != T.RPAREN) {
+        				s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        			}
+        		}
+        	}
+        }
     }
     private void expression_list() {
         

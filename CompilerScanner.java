@@ -93,6 +93,10 @@ public class CompilerScanner
         //msg is illegal character or string left unterminated by a '
         
     }
+    
+    public void customError(String errorString, int line ) {
+    	out.write(errorString + " at line"+line);
+    }
 
     public String removeSpacesAndComments(String stringPassed){
         String newString="";
