@@ -1,108 +1,136 @@
-package Scanner;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.PrintWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
-public class Parser {
-	public CompilerScanner myScanner;
-	public SymbolTable symbolTable;
-	public StringTable stringTable;
-	public String fileName;
-	public Token tok;
-	
-	/**
-	 * Constructor
-	 * @param filename = name of file to parse
-	 * @throws Exception
-	 */
-	public Parser (String filename) throws Exception {
-		this.symbolTable = new SymbolTable();
-		this.stringTable = new StringTable();
-		this.fileName = filename;
-		this.myScanner = new CompilerScanner(filename, stringTable, symbolTable);
-	}
-	
-	/**
-	 * Prints the symbol table out to a file
-	 * @throws Exception
-	 */
-	public void writeSymbolTable() throws Exception {
-        PrintWriter out = new PrintWriter("SymbolTableOut.txt");
-        for (int i = 0; i < symbolTable.table.length; i++) {
-        	if (symbolTable.table[i] != null)
-        		out.write("" + symbolTable.table[i].name);
+public class Parser{
+    CompilerScanner s;
+    Token symbol;
+
+    public Parser() throws Exception{
+        Scanner input = new Scanner(System.in);
+        System.out.print("Enter program file name: ");
+        String fileName = input.nextLine();
+        //init scanner
+        try {
+            s = new CompilerScanner(fileName);
+        } catch (IOException e) {
+            System.out.println("Error: Parser Constructor::Scanner Init::problem with filename passed.");
+            e.printStackTrace();
         }
-        out.close();
-	}
-	
-	/**
-	 * Variable Declarations
-	 */
-	public void variableDeclarations() throws Exception {
-		System.out.println("Variable Declarations");
-		//code for method
-	}
-	
-	public void variableDeclaration() throws Exception {
-		//code for method
-	}
-	
-	/**
-	 * Parse function
-	 * @throws Exception
-	 */
-	public void parse() throws Exception {
-		System.out.println("Program");
-		if (tok.tokenType == T.PROGRAM) {
-			tok = myScanner.nextToken();
-		} else {
-			myScanner.error(15, myScanner.line);
-		}
-		
-		if (tok.tokenType != T.IDENTIFIER) {
-			myScanner.error(16, myScanner.line);
-		} else {
-			tok = myScanner.nextToken();
-		}
-		
-		if(tok.tokenType == T.SEMI) {
-			tok = myScanner.nextToken();
-		} else {
-			myScanner.error(17, myScanner.line - 1);
-		}
-		
-		variableDeclarations();
-		
-		subprogramDeclarations();
-		
-		compoundDeclarations();
-		
-		if (tok.tokenType == T.PERIOD) {
-			System.out.println("Success");
-		} else {
-			myScanner.error(18, myScanner.line - 1);
-		}
-	}
-	
-	public void subprogramDeclarations() {
-		// code goes here
-	}
-	
-	public void compoundDeclarations() {
-		//code goes here
-	}
-	
-	public static void main (String args[]) throws Exception {
-		Scanner input = new Scanner(System.in);
-		System.out.print("Enter filename: ");
-		String filen = input.next();
-		Parser p = new Parser(filen);
-		p.tok = p.myScanner.nextToken();
-		p.parse();
-		p.writeSymbolTable();
-	}
-	
+        input.close();
+        //read first token
+        symbol = s.nextToken();
+        //move to start method
+        program();
+    }
+    private void error(String string) {
+        System.out.println(string);
+    }
+    private void program() {
+        Token firstToken = symbol;
+        Token secondToken = s.nextToken();
+        Token thirdToken = s.nextToken();
+
+        if (firstToken.tokenType == T.PROGRAM && secondToken.tokenType == T.IDENTIFIER && thirdToken.tokenType == T.SEMI){
+            symbol = s.nextToken();//progresses to next token
+
+            variable_declarations();
+            subprogram_declarations();
+            compound_statement();
+            if (symbol.tokenType != T.PERIOD){
+                error("No period to end program");
+            }
+        }
+    }
+    private void identifier_list() {
+        if (symbol.tokenType == T.IDENTIFIER){
+            symbol = s.nextToken();
+            while (symbol.tokenType == T.COMMA){
+                Token newIndentifier = s.nextToken();
+
+            }
+        }
+    }
+    private void variable_declarations() {
+        
+    }
+    private void variable_declaration() {
+        
+    }
+    private void type() {
+        
+    }
+    private void subprogram_declarations() {
+        
+    }
+    private void subprogram_declaration() {
+        
+    }
+    private void subprogram_head() {
+        
+    }
+    private void arguments() {
+        
+    }
+    //LIAM ABOVE THIS
+    //BOBERT AND KYLE BELOW THIS
+    private void parameter_list() {
+        
+    }
+    private void compound_statement() {
+        
+    }
+    private void statement_list() {
+        
+    }
+    private void statement() {
+        
+    }
+    private void assignment_statement() {
+        
+    }
+    private void if_statement() {
+        
+    }
+    private void while_statement() {
+        
+    }
+    private void procedure_statement() {
+        
+    }
+    private void expression_list() {
+        
+    }
+    private void expression() {
+        
+    }
+    private void simple_expression() {
+        
+    }
+    private void term() {
+        
+    }
+    private void factor() {
+        
+    }
+    private void read_statement() {
+        
+    }
+    private void write_statement() {
+        
+    }
+    private void writeln_statement() {
+        
+    }
+    private void output_item() {
+        
+    }
+    private void input_list() {
+        
+    }
+
+
+
+    public static void main(String[] args) throws Exception{
+        Parser p = new Parser();
+    }
 }
