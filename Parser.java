@@ -60,7 +60,7 @@ public class Parser{
             s.customError("ERROR -- identifier_list:: no identifier in list", s.line);
         }
     }
-    private void variable_declarations() {
+    private void variable_declarations() { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
         if (symbol.tokenType == T.VAR){
             symbol = s.nextToken();
             variable_declaration();
@@ -69,7 +69,7 @@ public class Parser{
                 Token closingSemiToken = symbol;
                 do{
                     variable_declaration();
-                }while(closingSemiToken == T.SEMI);
+                }while(closingSemiToken.tokenType == T.SEMI);
             }else {
                 error("variable_declarations::Missing ';' to end variable declaration");
                 s.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
@@ -149,31 +149,42 @@ public class Parser{
     private void parameter_list() throws Exception{
         identifier_list();
         if(symbol.tokenType == T.COLON) {
+        	symbol = s.nextToken();
             type();
-            symbol = s.nextToken();
-            // I am not sure if I did this correctly but it also could be right 
             while(symbol.tokenType == T.SEMI) {
+            	symbol = s.nextToken();
                 identifier_list();
-                symbol = s.nextToken();
                 if(symbol.tokenType == T.COLON) {
+                	symbol = s.nextToken();
                     type();
-                    symbol = s.nextToken();
+                } else {
+                	s.customError("ERROR -- EXPECTING COLON", s.line);
                 }
             }
+        } else {
+        	s.customError("ERROR -- EXPECTING COLON", s.line);
         }
     }
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
-        	statement_list();
         	symbol = s.nextToken();
-        	if (symbol.tokenType != T.END) {
-        		s.customError("ERROR -- EXPECTING END", s.line);
+        	if (symbol.tokenType == T.LT) {
+        		symbol = s.nextToken();
+        		statement_list();
+        		if (symbol.tokenType == T.GT) {
+        			symbol = s.nextToken();
+        		} else {
+        			s.customError("ERROR -- EXPECTING GREATER THAN", s.line);
+        		}
+        	} else {
+        		s.customError("ERROR -- EXPECTING LESS THAN", s.line);
         	}
+        } else {
+        	s.customError("ERROR -- EXPECTING BEGIN", s.line);
         }
     }
     private void statement_list() throws Exception{// ----------------------------------------------idk what goes in here?
         statement();
-        symbol = s.nextToken();
         while(symbol.tokenType == T.SEMI) {
             symbol = s.nextToken();
             statement();
@@ -189,7 +200,7 @@ public class Parser{
         else if (symbol.tokenType == T.BEGIN) {
         	compound_statement();
         }
-        else if (symbol.tokenType == T.IF) { 
+        else if (symbol.tokenType == T.IF) {
         	if_statement();
         }
         else if (symbol.tokenType == T.WHILE) {
@@ -207,32 +218,45 @@ public class Parser{
     	if (symbol.tokenType == T.IDENTIFIER) {
     		symbol = s.nextToken();
     		if (symbol.tokenType == T.ASSIGN) {
+    			symbol = s.nextToken();
             	expression();
+            } else {
+            	s.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
             }
+    	} else {
+    		s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
     	}
     }
-    private void if_statement() throws Exception { // -------------------------------------------- liam check this, the else brackets is that right?
+    private void if_statement() throws Exception {
         if (symbol.tokenType == T.IF) {
-        	expression();
         	symbol = s.nextToken();
+        	expression();
         	if (symbol.tokenType == T.THEN) {
-        		statement();
         		symbol = s.nextToken();
+        		statement();
         		if (symbol.tokenType == T.ELSE) {
+        			symbol = s.nextToken();
         			statement();
         		}
         	} else {
         		s.customError("ERROR -- EXPECTING THEN", s.line);
         	}
+        } else {
+        	s.customError("ERROR -- EXPECTING IF STATEMENT", s.line);
         }
     }
     private void while_statement() throws Exception{
         if(symbol.tokenType == T.WHILE) {
+        	symbol = s.nextToken();
             expression();
-            symbol = s.nextToken();
             if(symbol.tokenType == T.DO) {
-
+            	symbol = s.nextToken();
+            	statement();
+            } else {
+            	s.customError("ERROR -- EXPECTING DO", s.line);
             }
+        } else {
+        	s.customError("ERROR -- EXPECTING WHILE LOOP", s.line);
         }
     }
     private void procedure_statement() throws Exception {
@@ -241,61 +265,79 @@ public class Parser{
         	if (symbol.tokenType == T.IDENTIFIER) {
         		symbol = s.nextToken();
         		if (symbol.tokenType == T.LPAREN) {
-        			expression_list();
         			symbol = s.nextToken();
-        			if (symbol.tokenType != T.RPAREN) {
+        			expression_list();
+        			if (symbol.tokenType == T.RPAREN) {
+        				symbol = s.nextToken();
+        			} else {
         				s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
         			}
+        		} else {
+        			s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
         		}
+        	} else {
+        		s.customError("ERROR -- EXPECING IDENTIFIER", s.line);
         	}
+        } else {
+        	s.customError("ERROR -- EXPECTING CALL", s.line);
         }
     }
     private void expression_list() throws Exception{
         expression();
-        symbol = s.nextToken();
         while(symbol.tokenType == T.COMMA) {
             symbol = s.nextToken();
             expression();
         }
     }
     private void expression() throws Exception {
-    	symbol = s.nextToken();
     	simple_expression();
-        //if (symbol.tokenType == T.RE) // --------------------------------------------- NO T.RELOP WHAT DO HELP
-    }
-    private void simple_expression() throws Exception { // -------------------------- confused about the minus here. is this correct?
-        symbol = s.nextToken();
-        term();
-        symbol = s.nextToken();
-        while (symbol.tokenType == T.PLUS) {
-        	term();
+        if ((symbol.tokenType == T.LT) || (symbol.tokenType == T.GT) || (symbol.tokenType == T.EQUAL) || (symbol.tokenType == T.GE) || (symbol.tokenType == T.LE)) {
         	symbol = s.nextToken();
+        	simple_expression();
+        }
+    }
+    private void simple_expression() throws Exception {
+    	if (symbol.tokenType == T.MINUS) {
+    		symbol = s.nextToken();
+    	}
+        term();
+        while (symbol.tokenType == T.PLUS) {
+        	symbol = s.nextToken();
+        	term();
         }
     }
     private void term() throws Exception {
-        symbol = s.nextToken();
         factor();
-        symbol = s.nextToken();
         while (symbol.tokenType == T.TIMES) {
-        	factor();
         	symbol = s.nextToken();
+        	factor();
         }
     }
     private void factor() throws Exception{
         // I dont know what to do for true and false terminals
-        // there is no T.TRUE or T.FALSE
+        // there is no T.TRUE or T.FALSE - bobby
+    	// replaced true and false with boolean, please fix if wrong - kyle
         if(symbol.tokenType == T.IDENTIFIER) 
             symbol = s.nextToken();
         else if(symbol.tokenType == T.NUMBER) 
             symbol = s.nextToken();
+        else if (symbol.tokenType == T.BOOL) 
+        	symbol = s.nextToken();
         else if(symbol.tokenType == T.LPAREN) {
+        	symbol = s.nextToken();
             expression();
-            symbol = s.nextToken();
-            if (symbol.tokenType != T.RPAREN) {
-                s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
-            }
-        }else if(symbol.tokenType == T.NOT) {
+           if (symbol.tokenType == T.RPAREN) {
+        	   symbol = s.nextToken();
+           } else {
+        	   s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+           }
+        }
+        else if(symbol.tokenType == T.NOT) {
+        	symbol = s.nextToken();
             factor();
+        }
+        else {
+        	s.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s.line);
         }
 
     }
@@ -303,36 +345,54 @@ public class Parser{
         if(symbol.tokenType == T.READ) {
             symbol = s.nextToken();
             if(symbol.tokenType == T.LPAREN) {
+            	symbol = s.nextToken();
                 input_list();
-                symbol = s.nextToken();
-        		if (symbol.tokenType != T.RPAREN) {
-        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		if (symbol.tokenType == T.RPAREN) {
+        			symbol = s.nextToken();
+        		} else {
+        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
+            } else {
+            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
+        } else {
+        	s.customError("ERROR -- EXPECTING READ", s.line);
         }
     }
     private void write_statement() throws Exception{
-        if(symbol.tokenType == T.WRITE) {
+    	if(symbol.tokenType == T.WRITE) {
             symbol = s.nextToken();
             if(symbol.tokenType == T.LPAREN) {
+            	symbol = s.nextToken();
                 output_item();
-                symbol = s.nextToken();
-        		if (symbol.tokenType != T.RPAREN) {
-        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		if (symbol.tokenType == T.RPAREN) {
+        			symbol = s.nextToken();
+        		} else {
+        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
+            } else {
+            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
+        } else {
+        	s.customError("ERROR -- EXPECTING READ", s.line);
         }
     }
     private void writeln_statement() throws Exception{
-        if(symbol.tokenType == T.WRITELN) {
+    	if(symbol.tokenType == T.WRITELN) {
             symbol = s.nextToken();
             if(symbol.tokenType == T.LPAREN) {
+            	symbol = s.nextToken();
                 output_item();
-                symbol = s.nextToken();
-        		if (symbol.tokenType != T.RPAREN) {
-        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		if (symbol.tokenType == T.RPAREN) {
+        			symbol = s.nextToken();
+        		} else {
+        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
+            } else {
+            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
+        } else {
+        	s.customError("ERROR -- EXPECTING READ", s.line);
         }
     }
     private void output_item() throws Exception{
@@ -346,11 +406,15 @@ public class Parser{
             symbol = s.nextToken();
             while(symbol.tokenType == T.COMMA) {
                 symbol = s.nextToken();
-                if(symbol.tokenType != T.IDENTIFIER) {
-                    s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+                if (symbol.tokenType == T.IDENTIFIER) {
+                	symbol = s.nextToken();
+                } else {
+                	s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
                 }
             }
-        } 
+        } else {
+        	s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+        }
     }
 
 
