@@ -1,5 +1,3 @@
-package Scanner;
-
 public interface T
 {
   public static final int PROGRAM = 0;

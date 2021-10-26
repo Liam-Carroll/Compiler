@@ -1,5 +1,3 @@
-package Scanner;
-
 public class StringTable {
 	public String[] table;
 	/**

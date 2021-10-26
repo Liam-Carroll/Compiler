@@ -1,5 +1,3 @@
-package Scanner;
-
 public class Token {
     public int tokenType;
     public int value; //address in symbol table or numerical value

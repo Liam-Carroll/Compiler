@@ -1,0 +1,27 @@
+program average;
+
+procedure getAverage(xinteger);
+var sum, grade, count, aveinteger;
+begin 
+ sum=0;
+ count=0;
+ write('Enter grades End with 999n');
+ read(grade);
+ while grade  999 do 
+ begin 
+  count=count + 1;
+  sum=sum + grade;
+  write('grade ');
+  read(grade);
+ end;
+ ave=sumcount;
+ write('The average is ');
+ write(ave);
+ end;
+
+begin 
+ 
+ call getAverage(0);
+
+end.
+ 

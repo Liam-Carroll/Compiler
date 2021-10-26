@@ -1,5 +1,3 @@
-package Scanner;
-
 public class SymbolTable {
 	public SymbolTableObject[] table;
 	

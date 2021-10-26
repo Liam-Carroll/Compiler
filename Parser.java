@@ -146,8 +146,21 @@ public class Parser{
     }
     //LIAM ABOVE THIS
     //BOBERT AND KYLE BELOW THIS
-    private void parameter_list() {
-        
+    private void parameter_list() throws Exception{
+        identifier_list();
+        if(symbol.tokenType == T.COLON) {
+            type();
+            symbol = s.nextToken();
+            // I am not sure if I did this correctly but it also could be right 
+            while(symbol.tokenType == T.SEMI) {
+                identifier_list();
+                symbol = s.nextToken();
+                if(symbol.tokenType == T.COLON) {
+                    type();
+                    symbol = s.nextToken();
+                }
+            }
+        }
     }
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
@@ -158,8 +171,13 @@ public class Parser{
         	}
         }
     }
-    private void statement_list() {// ----------------------------------------------idk what goes in here?
-        
+    private void statement_list() throws Exception{// ----------------------------------------------idk what goes in here?
+        statement();
+        symbol = s.nextToken();
+        while(symbol.tokenType == T.SEMI) {
+            symbol = s.nextToken();
+            statement();
+        }
     }
     private void statement() throws Exception { // not done
         if (symbol.tokenType == T.IDENTIFIER) {
@@ -208,8 +226,14 @@ public class Parser{
         	}
         }
     }
-    private void while_statement() {
-        
+    private void while_statement() throws Exception{
+        if(symbol.tokenType == T.WHILE) {
+            expression();
+            symbol = s.nextToken();
+            if(symbol.tokenType == T.DO) {
+
+            }
+        }
     }
     private void procedure_statement() throws Exception {
         if (symbol.tokenType == T.CALL) {
@@ -226,8 +250,13 @@ public class Parser{
         	}
         }
     }
-    private void expression_list() {
-        
+    private void expression_list() throws Exception{
+        expression();
+        symbol = s.nextToken();
+        while(symbol.tokenType == T.COMMA) {
+            symbol = s.nextToken();
+            expression();
+        }
     }
     private void expression() throws Exception {
     	symbol = s.nextToken();
@@ -252,23 +281,76 @@ public class Parser{
         	symbol = s.nextToken();
         }
     }
-    private void factor() {
-        
+    private void factor() throws Exception{
+        // I dont know what to do for true and false terminals
+        // there is no T.TRUE or T.FALSE
+        if(symbol.tokenType == T.IDENTIFIER) 
+            symbol = s.nextToken();
+        else if(symbol.tokenType == T.NUMBER) 
+            symbol = s.nextToken();
+        else if(symbol.tokenType == T.LPAREN) {
+            expression();
+            symbol = s.nextToken();
+            if (symbol.tokenType != T.RPAREN) {
+                s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+            }
+        }else if(symbol.tokenType == T.NOT) {
+            factor();
+        }
+
     }
-    private void read_statement() {
-        
+    private void read_statement() throws Exception{
+        if(symbol.tokenType == T.READ) {
+            symbol = s.nextToken();
+            if(symbol.tokenType == T.LPAREN) {
+                input_list();
+                symbol = s.nextToken();
+        		if (symbol.tokenType != T.RPAREN) {
+        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		}
+            }
+        }
     }
-    private void write_statement() {
-        
+    private void write_statement() throws Exception{
+        if(symbol.tokenType == T.WRITE) {
+            symbol = s.nextToken();
+            if(symbol.tokenType == T.LPAREN) {
+                output_item();
+                symbol = s.nextToken();
+        		if (symbol.tokenType != T.RPAREN) {
+        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		}
+            }
+        }
     }
-    private void writeln_statement() {
-        
+    private void writeln_statement() throws Exception{
+        if(symbol.tokenType == T.WRITELN) {
+            symbol = s.nextToken();
+            if(symbol.tokenType == T.LPAREN) {
+                output_item();
+                symbol = s.nextToken();
+        		if (symbol.tokenType != T.RPAREN) {
+        			s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        		}
+            }
+        }
     }
-    private void output_item() {
-        
+    private void output_item() throws Exception{
+        if(symbol.tokenType == T.STRING) 
+            symbol = s.nextToken();
+        else
+            expression();
     }
-    private void input_list() {
-        
+    private void input_list() throws Exception{// I dont know if this is correct
+        if(symbol.tokenType == T.IDENTIFIER) {
+            symbol = s.nextToken();
+            while(symbol.tokenType == T.COMMA) {
+                symbol = s.nextToken();
+                if(symbol.tokenType != T.IDENTIFIER) {
+                    s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+                }
+            }
+        } 
     }
 
 
