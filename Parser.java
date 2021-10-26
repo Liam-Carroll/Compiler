@@ -14,6 +14,7 @@ public class Parser{
             s = new CompilerScanner(fileName);
         } catch (IOException e) {
             System.out.println("Error: Parser Constructor::Scanner Init::problem with filename passed.");
+            s.customError("ERROR -- Parser Constructor::Scanner Init::problem with filename passed.", s.line);
             e.printStackTrace();
         }
         input.close();
@@ -38,6 +39,7 @@ public class Parser{
             compound_statement();
             if (symbol.tokenType != T.PERIOD){
                 error("No period to end program");
+                s.customError("ERROR -- No period to end program", s.line);
             }
         }
     }
@@ -48,12 +50,14 @@ public class Parser{
                 Token newIndentifier = s.nextToken();
                 if (newIndentifier.tokenType != T.IDENTIFIER){
                     error("identifier_list:: no Identifier after comma seperating ids in list");
+                    s.customError("ERROR -- ", s.line);
                 }
                 symbol = s.nextToken();//may not catch error here
                 
             }
         }else{
             error("identifier_list:: no identifier in list");
+            s.customError("ERROR -- identifier_list:: no identifier in list", s.line);
         }
     }
     private void variable_declarations() {
@@ -68,6 +72,7 @@ public class Parser{
                 }while(closingSemiToken == T.SEMI);
             }else {
                 error("variable_declarations::Missing ';' to end variable declaration");
+                s.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
             }
 
         }
@@ -79,6 +84,7 @@ public class Parser{
             type();
         }else{
             error("variable_declaration::Missing ':' between identifier_list and type");
+            s.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
         }
     }
     private void type() {
@@ -86,6 +92,7 @@ public class Parser{
             symbol = s.nextToken();
         }else{
             error("type::Missing type INTEGER");
+            s.customError("ERROR -- type::Missing type INTEGER", s.line);
         }
     }
     private void subprogram_declarations() {
@@ -93,7 +100,7 @@ public class Parser{
         if (symbol.tokenType == T.SEMI){
             symbol = s.nextToken();
             subprogram_declarations();
-        }
+        }//no else bc optional
     }
     private void subprogram_declaration() {
         subprogram_head();
@@ -110,13 +117,16 @@ public class Parser{
                     symbol = s.nextToken();
                 }else{
                     error("subprogram_head::Missing semicolon ';' after arguments");
+                    s.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s.line);
                 }
             }else{
                 error("subprogram_head::Missing Identifier after procedure");
+                s.customError("ERROR -- subprogram_head::Missing Identifier after procedure", s.line);
             }
             
         }else{
             error("subprogram_head::Missing 'procedure' declaration");
+            s.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s.line);
         }
     }
     private void arguments() {
@@ -127,9 +137,11 @@ public class Parser{
                 symbol = s.nextToken();  
             }else{
                 error("arguments::Missing right parenthesis after parameter list");
+                s.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s.line);
             }
         }else{
             error("arguments::Missing left parenthesis before parameter list");
+            s.customError("ERROR -- arguments::Missing left parenthesis before parameter list", s.line);
         }
     }
     //LIAM ABOVE THIS
@@ -137,38 +149,108 @@ public class Parser{
     private void parameter_list() {
         
     }
-    private void compound_statement() {
+    private void compound_statement() throws Exception {
+        if (symbol.tokenType == T.BEGIN) {
+        	statement_list();
+        	symbol = s.nextToken();
+        	if (symbol.tokenType != T.END) {
+        		s.customError("ERROR -- EXPECTING END", s.line);
+        	}
+        }
+    }
+    private void statement_list() {// ----------------------------------------------idk what goes in here?
         
     }
-    private void statement_list() {
-        
+    private void statement() throws Exception { // not done
+        if (symbol.tokenType == T.IDENTIFIER) {
+        	assignment_statement();
+        }
+        else if (symbol.tokenType == T.CALL) {
+        	procedure_statement();
+        }
+        else if (symbol.tokenType == T.BEGIN) {
+        	compound_statement();
+        }
+        else if (symbol.tokenType == T.IF) { 
+        	if_statement();
+        }
+        else if (symbol.tokenType == T.WHILE) {
+        	while_statement();
+        }
+        else if (symbol.tokenType == T.READ) {
+        	read_statement();
+        }
+        else if (symbol.tokenType == T.WRITE) {
+        	write_statement();
+        }
+
     }
-    private void statement() {
-        
+    private void assignment_statement() throws Exception {
+    	if (symbol.tokenType == T.IDENTIFIER) {
+    		symbol = s.nextToken();
+    		if (symbol.tokenType == T.ASSIGN) {
+            	expression();
+            }
+    	}
     }
-    private void assignment_statement() {
-        
-    }
-    private void if_statement() {
-        
+    private void if_statement() throws Exception { // -------------------------------------------- liam check this, the else brackets is that right?
+        if (symbol.tokenType == T.IF) {
+        	expression();
+        	symbol = s.nextToken();
+        	if (symbol.tokenType == T.THEN) {
+        		statement();
+        		symbol = s.nextToken();
+        		if (symbol.tokenType == T.ELSE) {
+        			statement();
+        		}
+        	} else {
+        		s.customError("ERROR -- EXPECTING THEN", s.line);
+        	}
+        }
     }
     private void while_statement() {
         
     }
-    private void procedure_statement() {
-        
+    private void procedure_statement() throws Exception {
+        if (symbol.tokenType == T.CALL) {
+        	symbol = s.nextToken();
+        	if (symbol.tokenType == T.IDENTIFIER) {
+        		symbol = s.nextToken();
+        		if (symbol.tokenType == T.LPAREN) {
+        			expression_list();
+        			symbol = s.nextToken();
+        			if (symbol.tokenType != T.RPAREN) {
+        				s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        			}
+        		}
+        	}
+        }
     }
     private void expression_list() {
         
     }
-    private void expression() {
-        
+    private void expression() throws Exception {
+    	symbol = s.nextToken();
+    	simple_expression();
+        //if (symbol.tokenType == T.RE) // --------------------------------------------- NO T.RELOP WHAT DO HELP
     }
-    private void simple_expression() {
-        
+    private void simple_expression() throws Exception { // -------------------------- confused about the minus here. is this correct?
+        symbol = s.nextToken();
+        term();
+        symbol = s.nextToken();
+        while (symbol.tokenType == T.PLUS) {
+        	term();
+        	symbol = s.nextToken();
+        }
     }
-    private void term() {
-        
+    private void term() throws Exception {
+        symbol = s.nextToken();
+        factor();
+        symbol = s.nextToken();
+        while (symbol.tokenType == T.TIMES) {
+        	factor();
+        	symbol = s.nextToken();
+        }
     }
     private void factor() {
         
