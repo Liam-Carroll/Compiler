@@ -1,4 +1,3 @@
-package Scanner;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -21,32 +20,41 @@ public class Parser{
         }
         input.close();
         //read first token
+        symbol = new Token();
         symbol = s.nextToken();
         //move to start method
+        // System.out.println("VERY First token: " + symbol.tokenType);
         program();
     }
     private void error(String string) {
         System.out.println(string);
     }
     private void program() throws Exception {
-        Token firstToken = symbol;
+        Token firstToken = symbol;                                              //Program
         //System.out.println("First token: " + firstToken.tokenType);
-        Token secondToken = s.nextToken();
+        Token secondToken = s.nextToken();                                      //Add
         //System.out.println("Second token: " + secondToken.tokenType);
-        Token thirdToken = s.nextToken();
-       // System.out.println("Third token: " + thirdToken.tokenType);
-
+        Token thirdToken = s.nextToken();                                       //;
+        // System.out.println("Third token: " + thirdToken.tokenType);
+        System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
+        
         if (firstToken.tokenType == T.PROGRAM && secondToken.tokenType == T.IDENTIFIER && thirdToken.tokenType == T.SEMI){
         	System.out.println("ENTERS");
-            symbol = s.nextToken();//progresses to next token
-
-            variable_declarations();
-            subprogram_declarations();
-            compound_statement();
-            if (symbol.tokenType != T.PERIOD){
-                error("No period to end program");
-                s.customError("ERROR -- No period to end program", s.line);
-            }
+            try{
+                //progresses to next token
+                symbol = thirdToken;
+                variable_declarations();
+                subprogram_declarations();
+                compound_statement();
+                symbol = s.nextToken();//CHANGED THIS TO BELOW
+                if (symbol.tokenType != T.PERIOD){
+                    error("No period to end program");
+                    s.customError("ERROR -- No period to end program", s.line);
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+                System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
+            } 
         }
     }
     private void identifier_list() throws Exception {
