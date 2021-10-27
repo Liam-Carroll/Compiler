@@ -1,3 +1,5 @@
+package Scanner;
+
 import java.io.*;
 import java.util.Scanner;
 
@@ -17,7 +19,7 @@ public class CompilerScanner
     int line = 0;
     int state = 0;
 
-    public CompilerScanner(String fileName, StringTable stringTable, SymbolTable symbolTable) throws IOException 
+    public CompilerScanner(String fileName) throws IOException 
     {//Scanner Init
         f = new File(fileName);
         fileReader = new FileReader(f);
@@ -93,6 +95,7 @@ public class CompilerScanner
     }
     
     public void customError(String errorString, int line ) {
+    	System.out.println(errorString + " at line"+line);
     	out.write(errorString + " at line"+line);
     }
 
@@ -184,7 +187,9 @@ public class CompilerScanner
             br.reset();
 
         }while(fsm[state][charClass] > 0);
+        //System.out.println("Buf before: " + buf);
         buf = removeSpacesAndComments(buf);
+       // System.out.println("Buf after: " + buf);
         if (buf.equals(""))
             throw new Exception("");
         System.out.print(buf+"\t");
@@ -225,6 +230,7 @@ public class CompilerScanner
                     for(int i = 0; i < reserved.length; i ++) {
                         if (buf.equals(reserved[i])){
                             System.out.println(", "+i);
+                            return i;
                         }
                     }
                     return 44;//RESERVED WORD

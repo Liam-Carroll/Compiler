@@ -1,3 +1,5 @@
+package Scanner;
+
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -26,12 +28,16 @@ public class Parser{
     private void error(String string) {
         System.out.println(string);
     }
-    private void program() {
+    private void program() throws Exception {
         Token firstToken = symbol;
+        //System.out.println("First token: " + firstToken.tokenType);
         Token secondToken = s.nextToken();
+        //System.out.println("Second token: " + secondToken.tokenType);
         Token thirdToken = s.nextToken();
+       // System.out.println("Third token: " + thirdToken.tokenType);
 
         if (firstToken.tokenType == T.PROGRAM && secondToken.tokenType == T.IDENTIFIER && thirdToken.tokenType == T.SEMI){
+        	System.out.println("ENTERS");
             symbol = s.nextToken();//progresses to next token
 
             variable_declarations();
@@ -43,7 +49,7 @@ public class Parser{
             }
         }
     }
-    private void identifier_list() {
+    private void identifier_list() throws Exception {
         if (symbol.tokenType == T.IDENTIFIER){
             symbol = s.nextToken();
             while (symbol.tokenType == T.COMMA){
@@ -60,8 +66,8 @@ public class Parser{
             s.customError("ERROR -- identifier_list:: no identifier in list", s.line);
         }
     }
-    private void variable_declarations() { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
-        if (symbol.tokenType == T.VAR){
+    private void variable_declarations() throws Exception { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
+    	if (symbol.tokenType == T.VAR){
             symbol = s.nextToken();
             variable_declaration();
             if (symbol.tokenType == T.SEMI){
@@ -77,7 +83,7 @@ public class Parser{
 
         }
     }
-    private void variable_declaration() {
+    private void variable_declaration() throws Exception {
         identifier_list();
         if (symbol.tokenType == T.COLON){
             symbol = s.nextToken();
@@ -87,7 +93,7 @@ public class Parser{
             s.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
         }
     }
-    private void type() {
+    private void type() throws Exception {
         if (symbol.tokenType == T.INTEGER){
             symbol = s.nextToken();
         }else{
@@ -95,19 +101,19 @@ public class Parser{
             s.customError("ERROR -- type::Missing type INTEGER", s.line);
         }
     }
-    private void subprogram_declarations() {
+    private void subprogram_declarations() throws Exception {
         subprogram_declaration();
         if (symbol.tokenType == T.SEMI){
             symbol = s.nextToken();
             subprogram_declarations();
         }//no else bc optional
     }
-    private void subprogram_declaration() {
+    private void subprogram_declaration() throws Exception {
         subprogram_head();
         variable_declarations();
         compound_statement();
     }
-    private void subprogram_head() {
+    private void subprogram_head() throws Exception {
         if (symbol.tokenType == T.PROCEDURE){
             symbol = s.nextToken();
             if (symbol.tokenType == T.IDENTIFIER){
@@ -129,7 +135,7 @@ public class Parser{
             s.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s.line);
         }
     }
-    private void arguments() {
+    private void arguments() throws Exception {
         if (symbol.tokenType == T.LPAREN){
             symbol = s.nextToken();
             parameter_list();
@@ -301,14 +307,14 @@ public class Parser{
     		symbol = s.nextToken();
     	}
         term();
-        while (symbol.tokenType == T.PLUS) {
+        while ((symbol.tokenType == T.PLUS) || (symbol.tokenType == T.MINUS) || (symbol.tokenType == T.OR)) {
         	symbol = s.nextToken();
         	term();
         }
     }
     private void term() throws Exception {
         factor();
-        while (symbol.tokenType == T.TIMES) {
+        while ((symbol.tokenType == T.TIMES) || (symbol.tokenType == T.DIV)|| (symbol.tokenType == T.MOD) || (symbol.tokenType == T.AND)) {
         	symbol = s.nextToken();
         	factor();
         }
@@ -421,5 +427,6 @@ public class Parser{
 
     public static void main(String[] args) throws Exception{
         Parser p = new Parser();
+        
     }
 }
