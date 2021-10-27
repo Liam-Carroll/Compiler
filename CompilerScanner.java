@@ -1,4 +1,3 @@
-package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -95,8 +94,8 @@ public class CompilerScanner
     }
     
     public void customError(String errorString, int line ) {
-    	System.out.println(errorString + " at line"+line);
-    	out.write(errorString + " at line"+line);
+    	System.out.println(errorString + " at line "+line);
+    	out.write(errorString + " at line "+line);
     }
 
     public String removeSpacesAndComments(String stringPassed){
@@ -231,11 +230,12 @@ public class CompilerScanner
                         if (buf.equals(reserved[i])){
                             System.out.println(", "+i);
                             return i;
+                            
                         }
                     }
                     return 44;//RESERVED WORD
-                }
-                //NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
+                }//NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
+                
                 int symbolLocation = symbolTable.insert(buf, 0);
                 //System.out.println("Location of " + buf + "=" + location);
                 System.out.println(", "+ T.IDENTIFIER + "\t Symbol Location: " + symbolLocation);

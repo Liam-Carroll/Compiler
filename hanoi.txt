@@ -1,9 +1,4 @@
-program Hanoi;
- var height : integer;
-procedure move( height, start, goal, extra : integer); 
-begin
-if(height > 0)
-begin
+program Hanoi;var height : integer;procedure move( height, start, goal, extra : integer);begin if(height > 0) begin
 move (height-1, start, extra, goal);
 write(start);
 write('to');

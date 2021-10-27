@@ -36,54 +36,73 @@ public class Parser{
         //System.out.println("Second token: " + secondToken.tokenType);
         Token thirdToken = s.nextToken();                                       //;
         // System.out.println("Third token: " + thirdToken.tokenType);
-        System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
+        // System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
         
         if (firstToken.tokenType == T.PROGRAM && secondToken.tokenType == T.IDENTIFIER && thirdToken.tokenType == T.SEMI){
         	System.out.println("ENTERS");
             try{
                 //progresses to next token
-                symbol = thirdToken;
+                symbol = s.nextToken();
                 variable_declarations();
+                System.out.println("Leaving variable declaration->entering subprogram_dec, pointing at symbol: "+symbol.tokenType);
                 subprogram_declarations();
+                System.out.println("Leaving subprogram_declarations->entering compound_statement, pointing at symbol: "+symbol.tokenType);
                 compound_statement();
-                symbol = s.nextToken();//CHANGED THIS TO BELOW
+                // symbol = s.nextToken();//CHANGED THIS TO BELOW
                 if (symbol.tokenType != T.PERIOD){
                     error("No period to end program");
                     s.customError("ERROR -- No period to end program", s.line);
                 }
             }catch(Exception e){
                 e.printStackTrace();
-                System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
+                // System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
             } 
         }
     }
     private void identifier_list() throws Exception {
         if (symbol.tokenType == T.IDENTIFIER){
-            symbol = s.nextToken();
-            while (symbol.tokenType == T.COMMA){
-                Token newIndentifier = s.nextToken();
-                if (newIndentifier.tokenType != T.IDENTIFIER){
+            Token expectingComma = s.nextToken();
+            symbol = expectingComma;
+            while (expectingComma.tokenType == T.COMMA){
+                symbol = s.nextToken();//expecting ID
+                if (symbol.tokenType != T.IDENTIFIER){
                     error("identifier_list:: no Identifier after comma seperating ids in list");
                     s.customError("ERROR -- ", s.line);
+                    break;
+                }else{
+                    expectingComma = s.nextToken();//may not catch error here
                 }
-                symbol = s.nextToken();//may not catch error here
                 
             }
         }else{
-            error("identifier_list:: no identifier in list");
+            error("identifier_list:: no identifier in list, current symbol:"+symbol.tokenType);
             s.customError("ERROR -- identifier_list:: no identifier in list", s.line);
         }
     }
     private void variable_declarations() throws Exception { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
     	if (symbol.tokenType == T.VAR){
-            symbol = s.nextToken();
+            symbol = s.nextToken();//pointing at an ID
             variable_declaration();
             if (symbol.tokenType == T.SEMI){
                 symbol = s.nextToken();
-                Token closingSemiToken = symbol;
-                do{
+                Token expectingIdentifier = symbol;
+                while(expectingIdentifier.tokenType == T.IDENTIFIER){
+                    symbol = expectingIdentifier;
                     variable_declaration();
-                }while(closingSemiToken.tokenType == T.SEMI);
+                    if (symbol.tokenType == T.SEMI){
+                        symbol = s.nextToken();
+                        expectingIdentifier = symbol;
+                    }else{
+                        //no semi ending variable declaration
+                    }
+                }
+
+                // // Token closingSemiToken = new Token();
+                // do{
+                //     symbol = s.nextToken();
+                //     variable_declaration();
+                //     closingSemiToken = symbol;
+                // }while(closingSemiToken.tokenType == T.SEMI);
             }else {
                 error("variable_declarations::Missing ';' to end variable declaration");
                 s.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
@@ -165,12 +184,14 @@ public class Parser{
         if(symbol.tokenType == T.COLON) {
         	symbol = s.nextToken();
             type();
-            while(symbol.tokenType == T.SEMI) {
+            Token expectingSemi = symbol;
+            while(expectingSemi.tokenType == T.SEMI) {
             	symbol = s.nextToken();
                 identifier_list();
                 if(symbol.tokenType == T.COLON) {
                 	symbol = s.nextToken();
                     type();
+                    expectingSemi = symbol;
                 } else {
                 	s.customError("ERROR -- EXPECTING COLON", s.line);
                 }
@@ -181,20 +202,19 @@ public class Parser{
     }
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
-        	symbol = s.nextToken();
-        	if (symbol.tokenType == T.LT) {
-        		symbol = s.nextToken();
-        		statement_list();
-        		if (symbol.tokenType == T.GT) {
-        			symbol = s.nextToken();
-        		} else {
-        			s.customError("ERROR -- EXPECTING GREATER THAN", s.line);
-        		}
-        	} else {
-        		s.customError("ERROR -- EXPECTING LESS THAN", s.line);
-        	}
-        } else {
-        	s.customError("ERROR -- EXPECTING BEGIN", s.line);
+            symbol = s.nextToken();
+            statement_list();
+            symbol = s.nextToken();
+            if (symbol.tokenType == T.END) {
+                symbol = s.nextToken();
+            }else{
+                error("compound_statement::Missing 'END' after statement_list in compound statement");
+                s.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s.line);
+            }
+
+        }else{
+            error("compound_statement::Missing 'BEGIN' before statement_list in compound statement");
+            s.customError("ERROR -- compound_statement::EXPECTING BEGIN before statement_list in compound statement", s.line);
         }
     }
     private void statement_list() throws Exception{// ----------------------------------------------idk what goes in here?
