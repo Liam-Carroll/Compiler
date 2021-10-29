@@ -71,6 +71,7 @@ public class Parser{
                     break;
                 }else{
                     expectingComma = s.nextToken();//may not catch error here
+                    symbol = expectingComma;
                 }
                 
             }
@@ -184,7 +185,7 @@ public class Parser{
         if(symbol.tokenType == T.COLON) {
         	symbol = s.nextToken();
             type();
-            Token expectingSemi = symbol;
+            Token expectingSemi = symbol;//if multiple id-lists-> look for semi
             while(expectingSemi.tokenType == T.SEMI) {
             	symbol = s.nextToken();
                 identifier_list();
