@@ -1,3 +1,4 @@
+package Scanner;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -21,7 +22,7 @@ public class Parser{
         input.close();
         //read first token
         symbol = new Token();
-        symbol = s.nextToken();
+        symbol = s.newNextToken();
         //move to start method
         // System.out.println("VERY First token: " + symbol.tokenType);
         program();
@@ -42,13 +43,16 @@ public class Parser{
         	System.out.println("ENTERS");
             try{
                 //progresses to next token
-                symbol = s.nextToken();
+                symbol = s.newNextToken();
+                if (symbol == null) {
+                	System.out.println("HAHA THE SYMBOL IS NULL BUT THAT DOESNT MAKE SENSE BECASUE IT SAYS THAT NEXTTOKEN CANT RETURN NULL");
+                }
                 variable_declarations();
                 System.out.println("Leaving variable declaration->entering subprogram_dec, pointing at symbol: "+symbol.tokenType);
                 subprogram_declarations();
                 System.out.println("Leaving subprogram_declarations->entering compound_statement, pointing at symbol: "+symbol.tokenType);
                 compound_statement();
-                // symbol = s.nextToken();//CHANGED THIS TO BELOW
+                // symbol = s.newNextToken();//CHANGED THIS TO BELOW
                 if (symbol.tokenType != T.PERIOD){
                     error("No period to end program");
                     s.customError("ERROR -- No period to end program", s.line);
@@ -64,7 +68,7 @@ public class Parser{
             Token expectingComma = s.nextToken();
             symbol = expectingComma;
             while (expectingComma.tokenType == T.COMMA){
-                symbol = s.nextToken();//expecting ID
+                symbol = s.newNextToken();//expecting ID
                 if (symbol.tokenType != T.IDENTIFIER){
                     error("identifier_list:: no Identifier after comma seperating ids in list");
                     s.customError("ERROR -- ", s.line);
@@ -81,17 +85,25 @@ public class Parser{
         }
     }
     private void variable_declarations() throws Exception { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
+    	if (symbol == null) {
+    		System.out.println("WARNING -- SYMBOL IS NULL AT START OF VARIABLE DECLARATIONS");
+    	}
     	if (symbol.tokenType == T.VAR){
-            symbol = s.nextToken();//pointing at an ID
+            symbol = s.newNextToken();//pointing at an ID
             variable_declaration();
             if (symbol.tokenType == T.SEMI){
-                symbol = s.nextToken();
+                symbol = s.newNextToken();
                 Token expectingIdentifier = symbol;
+//                if (symbol == null) {
+//                	System.out.println("NULL");
+//                } else {
+//                	System.out.println("Symbol: " + symbol.toString());
+//                }
                 while(expectingIdentifier.tokenType == T.IDENTIFIER){
                     symbol = expectingIdentifier;
                     variable_declaration();
                     if (symbol.tokenType == T.SEMI){
-                        symbol = s.nextToken();
+                        symbol = s.newNextToken();
                         expectingIdentifier = symbol;
                     }else{
                         //no semi ending variable declaration
@@ -100,7 +112,7 @@ public class Parser{
 
                 // // Token closingSemiToken = new Token();
                 // do{
-                //     symbol = s.nextToken();
+                //     symbol = s.newNextToken();
                 //     variable_declaration();
                 //     closingSemiToken = symbol;
                 // }while(closingSemiToken.tokenType == T.SEMI);
@@ -114,7 +126,7 @@ public class Parser{
     private void variable_declaration() throws Exception {
         identifier_list();
         if (symbol.tokenType == T.COLON){
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             type();
         }else{
             error("variable_declaration::Missing ':' between identifier_list and type");
@@ -123,7 +135,7 @@ public class Parser{
     }
     private void type() throws Exception {
         if (symbol.tokenType == T.INTEGER){
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
         }else{
             error("type::Missing type INTEGER");
             s.customError("ERROR -- type::Missing type INTEGER", s.line);
@@ -132,7 +144,7 @@ public class Parser{
     private void subprogram_declarations() throws Exception {
         subprogram_declaration();
         if (symbol.tokenType == T.SEMI){
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             subprogram_declarations();
         }//no else bc optional
     }
@@ -143,12 +155,12 @@ public class Parser{
     }
     private void subprogram_head() throws Exception {
         if (symbol.tokenType == T.PROCEDURE){
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             if (symbol.tokenType == T.IDENTIFIER){
-                symbol = s.nextToken();
+                symbol = s.newNextToken();
                 arguments();
                 if (symbol.tokenType == T.SEMI){
-                    symbol = s.nextToken();
+                    symbol = s.newNextToken();
                 }else{
                     error("subprogram_head::Missing semicolon ';' after arguments");
                     s.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s.line);
@@ -165,10 +177,10 @@ public class Parser{
     }
     private void arguments() throws Exception {
         if (symbol.tokenType == T.LPAREN){
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             parameter_list();
             if (symbol.tokenType == T.RPAREN){
-                symbol = s.nextToken();  
+                symbol = s.newNextToken();  
             }else{
                 error("arguments::Missing right parenthesis after parameter list");
                 s.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s.line);
@@ -183,14 +195,14 @@ public class Parser{
     private void parameter_list() throws Exception{
         identifier_list();
         if(symbol.tokenType == T.COLON) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
             type();
             Token expectingSemi = symbol;//if multiple id-lists-> look for semi
             while(expectingSemi.tokenType == T.SEMI) {
-            	symbol = s.nextToken();
+            	symbol = s.newNextToken();
                 identifier_list();
                 if(symbol.tokenType == T.COLON) {
-                	symbol = s.nextToken();
+                	symbol = s.newNextToken();
                     type();
                     expectingSemi = symbol;
                 } else {
@@ -203,11 +215,11 @@ public class Parser{
     }
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             statement_list();
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             if (symbol.tokenType == T.END) {
-                symbol = s.nextToken();
+                symbol = s.newNextToken();
             }else{
                 error("compound_statement::Missing 'END' after statement_list in compound statement");
                 s.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s.line);
@@ -221,7 +233,7 @@ public class Parser{
     private void statement_list() throws Exception{// ----------------------------------------------idk what goes in here?
         statement();
         while(symbol.tokenType == T.SEMI) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             statement();
         }
     }
@@ -251,9 +263,9 @@ public class Parser{
     }
     private void assignment_statement() throws Exception {
     	if (symbol.tokenType == T.IDENTIFIER) {
-    		symbol = s.nextToken();
+    		symbol = s.newNextToken();
     		if (symbol.tokenType == T.ASSIGN) {
-    			symbol = s.nextToken();
+    			symbol = s.newNextToken();
             	expression();
             } else {
             	s.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
@@ -264,13 +276,13 @@ public class Parser{
     }
     private void if_statement() throws Exception {
         if (symbol.tokenType == T.IF) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         	expression();
         	if (symbol.tokenType == T.THEN) {
-        		symbol = s.nextToken();
+        		symbol = s.newNextToken();
         		statement();
         		if (symbol.tokenType == T.ELSE) {
-        			symbol = s.nextToken();
+        			symbol = s.newNextToken();
         			statement();
         		}
         	} else {
@@ -282,10 +294,10 @@ public class Parser{
     }
     private void while_statement() throws Exception{
         if(symbol.tokenType == T.WHILE) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
             expression();
             if(symbol.tokenType == T.DO) {
-            	symbol = s.nextToken();
+            	symbol = s.newNextToken();
             	statement();
             } else {
             	s.customError("ERROR -- EXPECTING DO", s.line);
@@ -296,14 +308,14 @@ public class Parser{
     }
     private void procedure_statement() throws Exception {
         if (symbol.tokenType == T.CALL) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         	if (symbol.tokenType == T.IDENTIFIER) {
-        		symbol = s.nextToken();
+        		symbol = s.newNextToken();
         		if (symbol.tokenType == T.LPAREN) {
-        			symbol = s.nextToken();
+        			symbol = s.newNextToken();
         			expression_list();
         			if (symbol.tokenType == T.RPAREN) {
-        				symbol = s.nextToken();
+        				symbol = s.newNextToken();
         			} else {
         				s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
         			}
@@ -320,31 +332,31 @@ public class Parser{
     private void expression_list() throws Exception{
         expression();
         while(symbol.tokenType == T.COMMA) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             expression();
         }
     }
     private void expression() throws Exception {
     	simple_expression();
         if ((symbol.tokenType == T.LT) || (symbol.tokenType == T.GT) || (symbol.tokenType == T.EQUAL) || (symbol.tokenType == T.GE) || (symbol.tokenType == T.LE)) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         	simple_expression();
         }
     }
     private void simple_expression() throws Exception {
     	if (symbol.tokenType == T.MINUS) {
-    		symbol = s.nextToken();
+    		symbol = s.newNextToken();
     	}
         term();
         while ((symbol.tokenType == T.PLUS) || (symbol.tokenType == T.MINUS) || (symbol.tokenType == T.OR)) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         	term();
         }
     }
     private void term() throws Exception {
         factor();
         while ((symbol.tokenType == T.TIMES) || (symbol.tokenType == T.DIV)|| (symbol.tokenType == T.MOD) || (symbol.tokenType == T.AND)) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         	factor();
         }
     }
@@ -353,22 +365,22 @@ public class Parser{
         // there is no T.TRUE or T.FALSE - bobby
     	// replaced true and false with boolean, please fix if wrong - kyle
         if(symbol.tokenType == T.IDENTIFIER) 
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
         else if(symbol.tokenType == T.NUMBER) 
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
         else if (symbol.tokenType == T.BOOL) 
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
         else if(symbol.tokenType == T.LPAREN) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
             expression();
            if (symbol.tokenType == T.RPAREN) {
-        	   symbol = s.nextToken();
+        	   symbol = s.newNextToken();
            } else {
         	   s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
            }
         }
         else if(symbol.tokenType == T.NOT) {
-        	symbol = s.nextToken();
+        	symbol = s.newNextToken();
             factor();
         }
         else {
@@ -378,12 +390,12 @@ public class Parser{
     }
     private void read_statement() throws Exception{
         if(symbol.tokenType == T.READ) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             if(symbol.tokenType == T.LPAREN) {
-            	symbol = s.nextToken();
+            	symbol = s.newNextToken();
                 input_list();
         		if (symbol.tokenType == T.RPAREN) {
-        			symbol = s.nextToken();
+        			symbol = s.newNextToken();
         		} else {
         			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
@@ -396,12 +408,12 @@ public class Parser{
     }
     private void write_statement() throws Exception{
     	if(symbol.tokenType == T.WRITE) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             if(symbol.tokenType == T.LPAREN) {
-            	symbol = s.nextToken();
+            	symbol = s.newNextToken();
                 output_item();
         		if (symbol.tokenType == T.RPAREN) {
-        			symbol = s.nextToken();
+        			symbol = s.newNextToken();
         		} else {
         			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
@@ -414,12 +426,12 @@ public class Parser{
     }
     private void writeln_statement() throws Exception{
     	if(symbol.tokenType == T.WRITELN) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             if(symbol.tokenType == T.LPAREN) {
-            	symbol = s.nextToken();
+            	symbol = s.newNextToken();
                 output_item();
         		if (symbol.tokenType == T.RPAREN) {
-        			symbol = s.nextToken();
+        			symbol = s.newNextToken();
         		} else {
         			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
@@ -432,17 +444,17 @@ public class Parser{
     }
     private void output_item() throws Exception{
         if(symbol.tokenType == T.STRING) 
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
         else
             expression();
     }
     private void input_list() throws Exception{// I dont know if this is correct
         if(symbol.tokenType == T.IDENTIFIER) {
-            symbol = s.nextToken();
+            symbol = s.newNextToken();
             while(symbol.tokenType == T.COMMA) {
-                symbol = s.nextToken();
+                symbol = s.newNextToken();
                 if (symbol.tokenType == T.IDENTIFIER) {
-                	symbol = s.nextToken();
+                	symbol = s.newNextToken();
                 } else {
                 	s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
                 }

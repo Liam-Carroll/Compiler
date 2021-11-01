@@ -1,3 +1,4 @@
+package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -102,18 +103,21 @@ public class CompilerScanner
         String newString="";
         char currentChar;
         // boolean isBeginComment=false;
-        stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
+        //stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
         stringPassed = stringPassed.replaceAll(" ","");
-        stringPassed = stringPassed.replaceAll("\n","");
-        stringPassed = stringPassed.replaceAll("\r","");
+        //stringPassed = stringPassed.replaceAll("\n","");
+        //stringPassed = stringPassed.replaceAll("\r","");
         stringPassed = stringPassed.replaceAll("\f","");
+        boolean isNotInString = false;
         for(int i =0; i<stringPassed.length(); i++){
             currentChar=stringPassed.charAt(i);
-            if(currentChar =='/' && i<stringPassed.length()-1){
-                if (stringPassed.charAt(i) == '/')//is next char also a /?
-                    return newString;//ignore rest of string as it is commented out
+            if (currentChar == '\'') 
+            	isNotInString = isNotInString ? false : true;//toggle every time we see a quote
+            
+            if(currentChar =='!' && isNotInString){ // we need to fix because if there 
+                   return newString;//ignore rest of string as it is commented out
             }
-            newString=newString+currentChar;
+                   newString=newString+currentChar;
         }
         return newString;
         //br.readLine(reads the rest of the line) use for comments
@@ -178,7 +182,7 @@ public class CompilerScanner
             charClass = getCategory(ch);
             // System.out.println(charClass);
             ///Check end of line?y/n
-            br.mark(1000);
+            br.mark(1000); 
             if(br.read() == '\n'){
                 line++;
                 // System.out.println("LINE INCREASED::"+line);
@@ -189,24 +193,35 @@ public class CompilerScanner
         //System.out.println("Buf before: " + buf);
         buf = removeSpacesAndComments(buf);
        // System.out.println("Buf after: " + buf);
-        if (buf.equals(""))
-            throw new Exception("");
-        System.out.print(buf+"\t");
-        int tokenType = finalState(state, buf);
-        if (tokenType == 13 || tokenType == 14 || tokenType == 15){
-            error(tokenType, line);
-            return null;
-            // System.exit(1);
-        }  
-        return new Token(tokenType,0);
-
+        if (!buf.equals("")) {
+//            throw new Exception(" buf equals nothing");
+	        System.out.print(buf+"\t");
+	        int tokenType = finalState(state, buf);
+	        if (tokenType == 13 || tokenType == 14 || tokenType == 15){
+	            error(tokenType, line);
+	            return null;
+	            // System.exit(1);
+	        }
+	        Token newToken = new Token(tokenType,0);
+	        if (newToken == null) //this code doesnt make any sense it keeps saying symbol is null but i tell it to print if its null and it is dead code so i dont even know
+	        	System.out.println("PLEASE HELP SOMETHING IS NULL");
+	        return newToken;
+        } 
+        System.out.println("SHOULD NEVER RETURN THIS NULL");
+        return null;//null HERE SHOULDNT GET HERE>!>!>!>!>!>!>!>!>>!
         // if state is a final state{
         //     Token t = finalState(state)
         // }else{
         //     error
         // }
     }
-
+    public Token newNextToken() throws Exception {//token is getting returned as null in nextToken even though that is not allowed to happen so this will filter until it doesnt happen
+    	Token newToken = nextToken();
+    	while (newToken == null) {
+    		newToken = nextToken();
+    	}
+    	return newToken;
+    }
     private boolean isResWord(String buf){
         buf = removeSpacesAndComments(buf);
         for (int i=0; i<reserved.length; i++){
