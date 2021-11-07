@@ -97,17 +97,19 @@ public class CompilerScanner
     public void customError(String errorString, int line ) {
     	System.out.println(errorString + " at line "+line);
     	out.write(errorString + " at line "+line);
+    	System.exit(0);
     }
 
     public String removeSpacesAndComments(String stringPassed){
         String newString="";
         char currentChar;
         // boolean isBeginComment=false;
-        //stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
+        stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
         stringPassed = stringPassed.replaceAll(" ","");
-        //stringPassed = stringPassed.replaceAll("\n","");
-        //stringPassed = stringPassed.replaceAll("\r","");
+        stringPassed = stringPassed.replaceAll("\n","");
+        stringPassed = stringPassed.replaceAll("\r","");
         stringPassed = stringPassed.replaceAll("\f","");
+        stringPassed = stringPassed.replaceAll("\t","");
         boolean isNotInString = false;
         for(int i =0; i<stringPassed.length(); i++){
             currentChar=stringPassed.charAt(i);
@@ -207,7 +209,7 @@ public class CompilerScanner
 	        	System.out.println("PLEASE HELP SOMETHING IS NULL");
 	        return newToken;
         } 
-        System.out.println("SHOULD NEVER RETURN THIS NULL");
+        //System.out.println("Blank Line");
         return null;//null HERE SHOULDNT GET HERE>!>!>!>!>!>!>!>!>>!
         // if state is a final state{
         //     Token t = finalState(state)
