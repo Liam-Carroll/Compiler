@@ -1,4 +1,4 @@
-package Scanner;
+
 
 public class SymbolTableObject {
 	public String name;

@@ -1,4 +1,4 @@
-package Scanner;
+
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -14,7 +14,6 @@ public class RunProgram {
 
         checkSpaceStripping(scan);
         runScannerTest(scan);
-        scan.out.close();
         input.close();
         
 

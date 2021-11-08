@@ -1,4 +1,3 @@
-package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -14,7 +13,7 @@ public class CompilerScanner
     FileReader fileReader;
     BufferedReader br;
     // BufferedReader br2;//for reading error
-    PrintWriter out;
+    ErrorLogger out;
     char ch = ' ';
     int line = 0;
     int state = 0;
@@ -25,12 +24,12 @@ public class CompilerScanner
         fileReader = new FileReader(f);
         br = new BufferedReader(fileReader);
         // br2 = new BufferedReader(fileReader);
-        
+        //===================Error Log========================
+        out = new ErrorLogger("ScannerErrorLog.txt");
         //===================Output to txt==========================
         FileReader fileReader2 = new FileReader(f);
         BufferedReader br3 = new BufferedReader(fileReader2);
 
-        out = new PrintWriter("output.txt");
         int increment = 1; 
         
         String output = br3.readLine();
@@ -38,7 +37,7 @@ public class CompilerScanner
          //System.out.println(output);
          if(output.isEmpty())
             break; 
-         out.write(increment + " " + output + System.lineSeparator());
+         out.log(increment + " " + output + System.lineSeparator());
          output = br3.readLine();
          increment++;
         }
@@ -87,18 +86,13 @@ public class CompilerScanner
         //     System.out.println(lineNum+" "+currentLine);
         //     lineNum++;
         // }
-        out.write(errorString + " at line "+line);
+        out.log(errorString + " at line "+line);
         //accepts the error msg and line num
         //prints the msg and exits
         //msg is illegal character or string left unterminated by a '
         
     }
-    
-    public void customError(String errorString, int line ) {
-    	System.out.println(errorString + " at line "+line);
-    	out.write(errorString + " at line "+line);
-    	System.exit(0);
-    }
+
 
     public String removeSpacesAndComments(String stringPassed){
         String newString="";

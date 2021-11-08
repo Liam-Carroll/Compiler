@@ -1,4 +1,3 @@
-package Scanner;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -6,8 +5,9 @@ import java.util.Scanner;
 public class Parser{
     CompilerScanner s;
     Token symbol;
-
+    ErrorLogger logger;
     public Parser() throws Exception{
+        logger = new ErrorLogger("ParserErrorLog.txt");
         Scanner input = new Scanner(System.in);
         System.out.print("Enter program file name: ");
         String fileName = input.nextLine();
@@ -16,7 +16,7 @@ public class Parser{
             s = new CompilerScanner(fileName);
         } catch (IOException e) {
             System.out.println("Error: Parser Constructor::Scanner Init::problem with filename passed.");
-            s.customError("ERROR -- Parser Constructor::Scanner Init::problem with filename passed.", s.line);
+            logger.customError("ERROR -- Parser Constructor::Scanner Init::problem with filename passed.", s.line);
             e.printStackTrace();
         }
         input.close();
@@ -52,14 +52,14 @@ public class Parser{
                 compound_statement();
                 // symbol = s.newNextToken();//CHANGED THIS TO BELOW
                 if (symbol.tokenType != T.PERIOD){
-                    s.customError("ERROR -- No period to end program", s.line);
+                    logger.customError("ERROR -- No period to end program", s.line);
                 }
             }catch(Exception e){
                 e.printStackTrace();
                 // System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
             } 
         } else {
-        	s.customError("ERROR -- MISSING PROGRAM DECLARATION LINE", 0);
+        	logger.customError("ERROR -- MISSING PROGRAM DECLARATION LINE", 0);
         }
     }
     private void identifier_list() throws Exception {
@@ -70,11 +70,11 @@ public class Parser{
                 if (symbol.tokenType == T.IDENTIFIER) {
                 	symbol = s.newNextToken();
                 } else {
-                	s.customError("ERROR -- EXPECTING ID", s.line);
+                	logger.customError("ERROR -- EXPECTING ID", s.line);
                 }
             }
         }else{
-            s.customError("ERROR -- identifier_list:: no identifier in list", s.line);
+            logger.customError("ERROR -- identifier_list:: no identifier in list", s.line);
         }
     }
     private void variable_declarations() throws Exception { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
@@ -88,12 +88,12 @@ public class Parser{
                 	if (symbol.tokenType == T.SEMI) {
                 		symbol = s.newNextToken();
                 	} else {
-                		s.customError("ERROR -- Expecting ';'", s.line);
+                		logger.customError("ERROR -- Expecting ';'", s.line);
                 	}
                 }
 
             }else {
-                s.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
+                logger.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
             }
         }
     }
@@ -103,14 +103,14 @@ public class Parser{
             symbol = s.newNextToken();
             type();
         }else{
-            s.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
+            logger.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
         }
     }
     private void type() throws Exception {
         if (symbol.tokenType == T.INTEGER){
             symbol = s.newNextToken();
         }else{
-            s.customError("ERROR -- type::Missing type INTEGER", s.line);
+            logger.customError("ERROR -- type::Missing type INTEGER", s.line);
         }
     }
     private void subprogram_declarations() throws Exception {
@@ -120,7 +120,7 @@ public class Parser{
                 symbol = s.newNextToken();
                 subprogram_declarations();
             } else {
-            	s.customError("ERROR -- Expecting ';'", s.line);
+            	logger.customError("ERROR -- Expecting ';'", s.line);
             }
         }
     }
@@ -138,14 +138,14 @@ public class Parser{
                 if (symbol.tokenType == T.SEMI) {
                     symbol = s.newNextToken();
                 }else{
-                    s.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s.line);
+                    logger.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s.line);
                 }
             }else{
-                s.customError("ERROR -- subprogram_head::Missing Identifier after procedure", s.line);
+                logger.customError("ERROR -- subprogram_head::Missing Identifier after procedure", s.line);
             }
             
         }else{
-            s.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s.line);
+            logger.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s.line);
         }
     }
     private void arguments() throws Exception {
@@ -155,10 +155,10 @@ public class Parser{
             if (symbol.tokenType == T.RPAREN) {
                 symbol = s.newNextToken();  
             }else{
-                s.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s.line);
+                logger.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s.line);
             }
         }else{
-            s.customError("ERROR -- arguments::Missing left parenthesis before parameter list", s.line);
+            logger.customError("ERROR -- arguments::Missing left parenthesis before parameter list", s.line);
         }
     }
     private void parameter_list() throws Exception{
@@ -173,12 +173,12 @@ public class Parser{
             		symbol = s.newNextToken();
             		type();
             	} else {
-            		s.customError("ERROR -- Expecting ':'", s.line);
+            		logger.customError("ERROR -- Expecting ':'", s.line);
             	}
             }
             
         } else {
-        	s.customError("ERROR -- EXPECTING COLON", s.line);
+        	logger.customError("ERROR -- EXPECTING COLON", s.line);
         }
     }
     private void compound_statement() throws Exception {
@@ -188,11 +188,11 @@ public class Parser{
             if (symbol.tokenType == T.END) {
                 symbol = s.newNextToken();
             }else{
-                s.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s.line);
+                logger.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s.line);
             }
 
         }else{
-            s.customError("ERROR -- compound_statement::EXPECTING BEGIN before statement_list in compound statement", s.line);
+            logger.customError("ERROR -- compound_statement::EXPECTING BEGIN before statement_list in compound statement", s.line);
         }
     }
     private void statement_list() throws Exception{// ----------------------------------------------idk what goes in here?
@@ -235,10 +235,10 @@ public class Parser{
     			symbol = s.newNextToken();
             	expression();
             } else {
-            	s.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
+            	logger.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
             }
     	} else {
-    		s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+    		logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
     	}
     }
     private void if_statement() throws Exception {
@@ -253,10 +253,10 @@ public class Parser{
         			statement();
         		}
         	} else {
-        		s.customError("ERROR -- EXPECTING THEN", s.line);
+        		logger.customError("ERROR -- EXPECTING THEN", s.line);
         	}
         } else {
-        	s.customError("ERROR -- EXPECTING IF STATEMENT", s.line);
+        	logger.customError("ERROR -- EXPECTING IF STATEMENT", s.line);
         }
     }
     private void while_statement() throws Exception{
@@ -267,10 +267,10 @@ public class Parser{
             	symbol = s.newNextToken();
             	statement();
             } else {
-            	s.customError("ERROR -- EXPECTING DO", s.line);
+            	logger.customError("ERROR -- EXPECTING DO", s.line);
             }
         } else {
-        	s.customError("ERROR -- EXPECTING WHILE", s.line);
+        	logger.customError("ERROR -- EXPECTING WHILE", s.line);
         }
     }
     private void procedure_statement() throws Exception {
@@ -284,16 +284,16 @@ public class Parser{
         			if (symbol.tokenType == T.RPAREN) {
         				symbol = s.newNextToken();
         			} else {
-        				s.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        				logger.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
         			}
         		} else {
-        			s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
         		}
         	} else {
-        		s.customError("ERROR -- EXPECING IDENTIFIER", s.line);
+        		logger.customError("ERROR -- EXPECING IDENTIFIER", s.line);
         	}
         } else {
-        	s.customError("ERROR -- EXPECTING CALL", s.line);
+        	logger.customError("ERROR -- EXPECTING CALL", s.line);
         }
     }
     private void expression_list() throws Exception{
@@ -343,7 +343,7 @@ public class Parser{
            if (symbol.tokenType == T.RPAREN) {
         	   symbol = s.newNextToken();
            } else {
-        	   s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        	   logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
            }
         }
         else if(symbol.tokenType == T.NOT) {
@@ -351,7 +351,7 @@ public class Parser{
             factor();
         }
         else {
-        	s.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s.line);
+        	logger.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s.line);
         }
 
     }
@@ -364,13 +364,13 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
             } else {
-            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
         } else {
-        	s.customError("ERROR -- EXPECTING READ", s.line);
+        	logger.customError("ERROR -- EXPECTING READ", s.line);
         }
     }
     private void write_statement() throws Exception{
@@ -382,13 +382,13 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
             } else {
-            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
         } else {
-        	s.customError("ERROR -- EXPECTING WRITE", s.line);
+        	logger.customError("ERROR -- EXPECTING WRITE", s.line);
         }
     }
     private void writeln_statement() throws Exception{
@@ -400,13 +400,13 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			s.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
         		}
             } else {
-            	s.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
             }
         } else {
-        	s.customError("ERROR -- EXPECTING WRITELN", s.line);
+        	logger.customError("ERROR -- EXPECTING WRITELN", s.line);
         }
     }
     private void output_item() throws Exception{
@@ -415,7 +415,7 @@ public class Parser{
         } else if ((symbol.tokenType == T.MINUS) || (symbol.tokenType == T.IDENTIFIER) || (symbol.tokenType == T.NUMBER) || (symbol.tokenType == T.BOOL) || (symbol.tokenType == T.LPAREN) || (symbol.tokenType == T.NOT)) {
         	expression();
         } else {
-        	s.customError("ERROR -- Missing expression", s.line);
+        	logger.customError("ERROR -- Missing expression", s.line);
         }
         
     }
@@ -427,11 +427,11 @@ public class Parser{
                 if (symbol.tokenType == T.IDENTIFIER) {
                 	symbol = s.newNextToken();
                 } else {
-                	s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+                	logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
                 }
             }
         } else {
-        	s.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+        	logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
         }
     }
 
