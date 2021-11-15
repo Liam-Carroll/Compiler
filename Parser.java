@@ -1,3 +1,4 @@
+package Scanner;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -6,6 +7,7 @@ public class Parser{
     CompilerScanner s;
     Token symbol;
     ErrorLogger logger;
+ 
     public Parser() throws Exception{
         logger = new ErrorLogger("ParserErrorLog.txt");
         Scanner input = new Scanner(System.in);
@@ -42,11 +44,13 @@ public class Parser{
         if (firstToken.tokenType == T.PROGRAM && secondToken.tokenType == T.IDENTIFIER && thirdToken.tokenType == T.SEMI) {
         	//System.out.println("ENTERS");
             try{
+            	s.symbolTable.table[s.symbolTable.currentAdd].name = secondToken.name;
+            	s.symbolTable.table[s.symbolTable.currentAdd].kind = "program_name";
+            	s.symbolTable.table[s.symbolTable.currentAdd].type = T.PROGRAM;
+            	s.symbolTable.table[s.symbolTable.currentAdd].scope = 0;
+            	s.symbolTable.table[s.symbolTable.currentAdd].declared = "true";
                 //progresses to next token
                 symbol = s.newNextToken();
-                if (symbol == null) { //comment out when done
-                	System.out.println("HAHA THE SYMBOL IS NULL BUT THAT DOESNT MAKE SENSE BECASUE IT SAYS THAT NEXTTOKEN CANT RETURN NULL");
-                }
                 variable_declarations();
                 subprogram_declarations();
                 compound_statement();
@@ -54,6 +58,7 @@ public class Parser{
                 if (symbol.tokenType != T.PERIOD){
                     logger.customError("ERROR -- No period to end program", s.line);
                 }
+                s.symbolTable.print();
             }catch(Exception e){
                 e.printStackTrace();
                 // System.out.println("First Token: "+firstToken.tokenType+"\nSecond token: " + secondToken.tokenType+"\nThird token: " + thirdToken.tokenType);
@@ -62,12 +67,16 @@ public class Parser{
         	logger.customError("ERROR -- MISSING PROGRAM DECLARATION LINE", 0);
         }
     }
-    private void identifier_list() throws Exception {
+    private void identifier_list(Semantics sem) throws Exception {
+    	sem.count = 0;
         if (symbol.tokenType == T.IDENTIFIER) {
+        	sem.start = s.symbolTable.currentAdd;
+        	sem.count++;
             symbol = s.newNextToken();
             while (symbol.tokenType == T.COMMA) {
                 symbol = s.newNextToken();
                 if (symbol.tokenType == T.IDENTIFIER) {
+                	sem.count++;
                 	symbol = s.newNextToken();
                 } else {
                 	logger.customError("ERROR -- EXPECTING ID", s.line);
@@ -80,11 +89,18 @@ public class Parser{
     private void variable_declarations() throws Exception { // pretty sure this doesnt work you dont need to make extra tokens it messes up the current token
     	if (symbol.tokenType == T.VAR) {
             symbol = s.newNextToken();//pointing at an ID
-            variable_declaration();
+            Semantics sem = new Semantics();
+            variable_declaration(sem);
+            for (int j = sem.start; j < sem.count; j++) {
+            	s.symbolTable.table[j].type = sem.type;
+            }
             if (symbol.tokenType == T.SEMI) {
                 symbol = s.newNextToken();
                 while (symbol.tokenType == T.IDENTIFIER) {
-                	variable_declaration();
+                	variable_declaration(sem);
+                	for (int j = sem.start; j < sem.count; j++) {
+                    	s.symbolTable.table[j].type = sem.type;
+                    }
                 	if (symbol.tokenType == T.SEMI) {
                 		symbol = s.newNextToken();
                 	} else {
@@ -97,22 +113,26 @@ public class Parser{
             }
         }
     }
-    private void variable_declaration() throws Exception {
-        identifier_list();
+    
+    private void variable_declaration(Semantics sem) throws Exception {
+        identifier_list(sem);
         if (symbol.tokenType == T.COLON){
             symbol = s.newNextToken();
-            type();
+            type(sem);
         }else{
             logger.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
         }
     }
-    private void type() throws Exception {
+    
+    private void type(Semantics sem) throws Exception {
         if (symbol.tokenType == T.INTEGER){
             symbol = s.newNextToken();
+            sem.type = T.INTEGER;
         }else{
             logger.customError("ERROR -- type::Missing type INTEGER", s.line);
         }
     }
+    
     private void subprogram_declarations() throws Exception {
         if (symbol.tokenType == T.PROCEDURE) {
         	subprogram_declaration();
@@ -125,9 +145,11 @@ public class Parser{
         }
     }
     private void subprogram_declaration() throws Exception {
+    	s.incScope();
         subprogram_head();
         variable_declarations();
         compound_statement();
+        s.decScope();
     }
     private void subprogram_head() throws Exception {
         if (symbol.tokenType == T.PROCEDURE) {
@@ -162,16 +184,18 @@ public class Parser{
         }
     }
     private void parameter_list() throws Exception{
-        identifier_list();
+    	Semantics sem = new Semantics();
+    	
+        identifier_list(sem);
         if(symbol.tokenType == T.COLON) {
         	symbol = s.newNextToken();
-            type();
+            type(sem);
             while (symbol.tokenType == T.SEMI) {
             	symbol = s.newNextToken();
-            	identifier_list();
+            	identifier_list(sem);
             	if (symbol.tokenType == T.COLON) {
             		symbol = s.newNextToken();
-            		type();
+            		type(sem);
             	} else {
             		logger.customError("ERROR -- Expecting ':'", s.line);
             	}
