@@ -1,3 +1,4 @@
+package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -6,8 +7,9 @@ public class CompilerScanner
 {
     private int[][] fsm;//contains the state mappings of the FSM, read from file
     private String[] reserved ={"program","var","integer","bool","procedure","call","begin","end","if","then","else","while","do","and","or","not","read","write","writeln"};
-    private SymbolTable symbolTable = new SymbolTable();
-    private StringTable stringTable = new StringTable();
+    public StringTable stringTable = new StringTable();
+    public SymbolTable symbolTable = new SymbolTable();
+    
 
     File f;
     FileReader fileReader;
@@ -17,6 +19,8 @@ public class CompilerScanner
     char ch = ' ';
     int line = 0;
     int state = 0;
+    int scope = 0;
+    
 
     public CompilerScanner(String fileName) throws IOException 
     {//Scanner Init
@@ -56,6 +60,14 @@ public class CompilerScanner
         }
         //System.out.println("======================");
         input.close();
+    }
+    
+    public void incScope() {
+    	scope++;
+    }
+    
+    public void decScope() {
+    	scope--;
     }
 
     public void error(int errorCode, int line) throws IOException{
@@ -198,7 +210,7 @@ public class CompilerScanner
 	            return null;
 	            // System.exit(1);
 	        }
-	        Token newToken = new Token(tokenType,0);
+	        Token newToken = new Token(tokenType,0,buf);
 	        if (newToken == null) //this code doesnt make any sense it keeps saying symbol is null but i tell it to print if its null and it is dead code so i dont even know
 	        	System.out.println("PLEASE HELP SOMETHING IS NULL");
 	        return newToken;
@@ -247,9 +259,9 @@ public class CompilerScanner
                     return 44;//RESERVED WORD
                 }//NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
                 
-                int symbolLocation = symbolTable.insert(buf, 0);
+                int symbolLocation = symbolTable.insert(buf, "variable", T.BOOL, scope, "true");
                 //System.out.println("Location of " + buf + "=" + location);
-                System.out.println(", "+ T.IDENTIFIER + "\t Symbol Location: " + symbolLocation);
+                //System.out.println(", "+ T.IDENTIFIER + "\t Symbol Location: " + symbolLocation + "\t Symbol Scope: " + scope);
                 return T.IDENTIFIER;// +", "+buf;//final state ID
             case 2:
                 System.out.println(", "+T.NUMBER);
