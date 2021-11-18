@@ -1,4 +1,4 @@
-package Scanner;
+
 
 import java.io.*;
 import java.util.Scanner;
@@ -116,7 +116,7 @@ public class CompilerScanner
         stringPassed = stringPassed.replaceAll("\r","");
         stringPassed = stringPassed.replaceAll("\f","");
         stringPassed = stringPassed.replaceAll("\t","");
-        boolean isNotInString = false;
+        boolean isNotInString = true;
         for(int i =0; i<stringPassed.length(); i++){
             currentChar=stringPassed.charAt(i);
             if (currentChar == '\'') 

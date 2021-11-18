@@ -1,4 +1,4 @@
-package Scanner;
+
 
 public class Semantics {
 	public final int intType = T.INTEGER;

@@ -1,4 +1,4 @@
-package Scanner;
+
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,7 +12,7 @@ public class ErrorLogger{
     public ErrorLogger(String outputFileName){
         try{
             fileName = outputFileName;
-            out = new PrintWriter("outputLogs.txt");
+            out = new PrintWriter(fileName);
             Date date = new Date();
             Timestamp timestamp = new Timestamp(date.getTime());
             out.write("Log opened at: "+timestamp);//clears file, leaving only this.
@@ -23,7 +23,7 @@ public class ErrorLogger{
     }
     public void log(String stringPassed){
         try {
-            FileWriter logger = new FileWriter(fileName);
+            FileWriter logger = new FileWriter(fileName, true);
             logger.append(stringPassed);
             logger.close();
             // System.out.println("Successfully logged to the output file.");

@@ -2,9 +2,11 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class Quads {
+    ErrorLogger logger;
     ArrayList<Quad> quads;
     public Quads(){
         quads = new ArrayList<Quad>();
+        logger = new ErrorLogger("QuadsOutputLog.txt");
     }
     public int size(){
         return quads.size();
@@ -16,6 +18,22 @@ public class Quads {
         Quad newQuad = new Quad(quadArgs[0], quadArgs[1], quadArgs[2], quadArgs[3]);
         //add to quads arraylist
         quads.add(newQuad);
+        System.out.println("Adding Quad: "+ newQuad.returnFullString());
+        logger.log("Adding Quad: "+ newQuad.returnFullString()+"\n");
+    }
+    public void insertQuad(int index, String _operator, String _arg1, String _arg2, String _result){
+        //parse args
+        String[] quadArgs = parseQuadArgs(_operator, _arg1, _arg2, _result);
+        //create quad
+        Quad newQuad = new Quad(quadArgs[0], quadArgs[1], quadArgs[2], quadArgs[3]);
+        //add to quads arraylist
+        quads.add(index, newQuad);
+    }
+    public void insertQuad(Quad newQuad){
+        quads.add(newQuad);
+    }
+    public void insertQuad(int index, Quad newQuad){
+        quads.add(index, newQuad);
     }
     public void updateQuad(String _operator, String _arg1, String _arg2, String _result, int index){
         //parse args
@@ -35,7 +53,7 @@ public class Quads {
     }
     public void printQuads(){
         for (int i = 0; i< size(); i++){
-            quads.get(i).print();
+            System.out.println(i+". "+quads.get(i).returnFullString());
         }
     }
     private String[] parseQuadArgs(String _operator, String _arg1, String _arg2, String _result){

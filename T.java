@@ -1,4 +1,4 @@
-package Scanner;
+
 
 public interface T
 {

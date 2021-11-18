@@ -1,4 +1,4 @@
-package Scanner;
+
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -7,8 +7,12 @@ public class Parser{
     CompilerScanner s;
     Token symbol;
     ErrorLogger logger;
- 
+    Quads quads;
+    int scope = 0;
+
+
     public Parser() throws Exception{
+        quads = new Quads();
         logger = new ErrorLogger("ParserErrorLog.txt");
         Scanner input = new Scanner(System.in);
         System.out.print("Enter program file name: ");
@@ -49,6 +53,8 @@ public class Parser{
             	s.symbolTable.table[s.symbolTable.currentAdd].type = T.PROGRAM;
             	s.symbolTable.table[s.symbolTable.currentAdd].scope = 0;
             	s.symbolTable.table[s.symbolTable.currentAdd].declared = "true";
+                //Debug
+                quads.insertQuad("DCL", null, null, "0");
                 //progresses to next token
                 symbol = s.newNextToken();
                 variable_declarations();
@@ -92,6 +98,7 @@ public class Parser{
             Semantics sem = new Semantics();
             variable_declaration(sem);
             for (int j = sem.start; j < sem.count; j++) {
+                quads.insertQuad("DCL", null, null, ""+j);
             	s.symbolTable.table[j].type = sem.type;
             }
             if (symbol.tokenType == T.SEMI) {
@@ -99,6 +106,7 @@ public class Parser{
                 while (symbol.tokenType == T.IDENTIFIER) {
                 	variable_declaration(sem);
                 	for (int j = sem.start; j < sem.count; j++) {
+                        quads.insertQuad("DCL", null, null, ""+j);
                     	s.symbolTable.table[j].type = sem.type;
                     }
                 	if (symbol.tokenType == T.SEMI) {
@@ -112,6 +120,7 @@ public class Parser{
                 logger.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
             }
         }
+
     }
     
     private void variable_declaration(Semantics sem) throws Exception {
