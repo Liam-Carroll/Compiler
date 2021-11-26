@@ -1,4 +1,6 @@
+package Scanner;
 
+import java.util.Optional;
 
 public class Quad {
     public String operator, arg1, arg2, result;
@@ -9,9 +11,11 @@ public class Quad {
         arg2 = _arg2;
         result = _result;
     }
+    
     public void print(){
         System.out.println(operator +" "+ arg1 + " " + arg2 + " " + result);
     }
+    
     public String returnFullString(){
         return operator +" "+ arg1 + " " + arg2 + " " + result;
     }

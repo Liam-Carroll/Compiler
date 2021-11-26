@@ -1,3 +1,5 @@
+package Scanner;
+
 public class testQuads {
     public static void main(String[] args){
         Quads quads = new Quads();

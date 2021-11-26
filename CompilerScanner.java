@@ -1,4 +1,4 @@
-
+package Scanner;
 
 import java.io.*;
 import java.util.Scanner;
@@ -10,12 +10,11 @@ public class CompilerScanner
     public StringTable stringTable = new StringTable();
     public SymbolTable symbolTable = new SymbolTable();
     
-
     File f;
     FileReader fileReader;
     BufferedReader br;
-    // BufferedReader br2;//for reading error
     ErrorLogger out;
+    
     char ch = ' ';
     int line = 0;
     int state = 0;
@@ -23,11 +22,10 @@ public class CompilerScanner
     
 
     public CompilerScanner(String fileName) throws IOException 
-    {//Scanner Init
+    {
         f = new File(fileName);
         fileReader = new FileReader(f);
         br = new BufferedReader(fileReader);
-        // br2 = new BufferedReader(fileReader);
         //===================Error Log========================
         out = new ErrorLogger("ScannerErrorLog.txt");
         //===================Output to txt==========================
@@ -38,7 +36,6 @@ public class CompilerScanner
         
         String output = br3.readLine();
         while(output != null) {
-         //System.out.println(output);
          if(output.isEmpty())
             break; 
          out.log(increment + " " + output + System.lineSeparator());
@@ -50,15 +47,11 @@ public class CompilerScanner
         fsm = new int[15][11];
 
         Scanner input = new Scanner(new File("FSM.txt"));
-       // System.out.print("==========FSM=========");
         for (int row = 0; row < 15; row++) {
             for (int col = 0; col < 11; col++){
                 fsm[row][col] = input.nextInt();
-                //System.out.print(fsm[row][col]+" ");
             }
-            //System.out.println();
         }
-        //System.out.println("======================");
         input.close();
     }
     
@@ -91,13 +84,6 @@ public class CompilerScanner
                 errorString="ERROR";
                 break;
         }
-        // String currentLine;
-        // int lineNum=0;
-        // while ((currentLine = br.readLine()) != null)   {
-        //     // Print the content on the console
-        //     System.out.println(lineNum+" "+currentLine);
-        //     lineNum++;
-        // }
         out.log(errorString + " at line "+line);
         //accepts the error msg and line num
         //prints the msg and exits
@@ -105,11 +91,9 @@ public class CompilerScanner
         
     }
 
-
     public String removeSpacesAndComments(String stringPassed){
         String newString="";
         char currentChar;
-        // boolean isBeginComment=false;
         stringPassed = stringPassed.replaceAll(System.lineSeparator(), "");
         stringPassed = stringPassed.replaceAll(" ","");
         stringPassed = stringPassed.replaceAll("\n","");
@@ -122,14 +106,12 @@ public class CompilerScanner
             if (currentChar == '\'') 
             	isNotInString = isNotInString ? false : true;//toggle every time we see a quote
             
-            if(currentChar =='!' && isNotInString){ // we need to fix because if there 
+            if(currentChar =='!' && isNotInString){
                    return newString;//ignore rest of string as it is commented out
             }
                    newString=newString+currentChar;
         }
         return newString;
-        //br.readLine(reads the rest of the line) use for comments
-
     }
     
     public int getCategory(char ch){
@@ -174,33 +156,25 @@ public class CompilerScanner
     }
 
     public Token nextToken() throws Exception{
-        //removespaces()
         // scanning algorithm
         int state = 0;
 
         int charClass = getCategory(ch);//column value for the FSM
-        // System.out.println(charClass);
         String buf = "";
-        // System.out.println("TEXT: "+(char)br.read());
         do{
             buf = buf + ch;
             ch = (char)br.read();//get the next character, ch
-            // System.out.println(buf+"-> "+ch);
             state = fsm[state][charClass];
             charClass = getCategory(ch);
-            // System.out.println(charClass);
             ///Check end of line?y/n
             br.mark(1000); 
             if(br.read() == '\n'){
                 line++;
-                // System.out.println("LINE INCREASED::"+line);
             }
             br.reset();
 
         }while(fsm[state][charClass] > 0);
-        //System.out.println("Buf before: " + buf);
         buf = removeSpacesAndComments(buf);
-       // System.out.println("Buf after: " + buf);
         if (!buf.equals("")) {
 //            throw new Exception(" buf equals nothing");
 	        System.out.print(buf+"\t");
@@ -208,22 +182,13 @@ public class CompilerScanner
 	        if (tokenType == 13 || tokenType == 14 || tokenType == 15){
 	            error(tokenType, line);
 	            return null;
-	            // System.exit(1);
 	        }
 	        Token newToken = new Token(tokenType,0,buf);
-	        if (newToken == null) //this code doesnt make any sense it keeps saying symbol is null but i tell it to print if its null and it is dead code so i dont even know
-	        	System.out.println("PLEASE HELP SOMETHING IS NULL");
 	        return newToken;
         } 
-        //System.out.println("Blank Line");
-        return null;//null HERE SHOULDNT GET HERE>!>!>!>!>!>!>!>!>>!
-        // if state is a final state{
-        //     Token t = finalState(state)
-        // }else{
-        //     error
-        // }
+        return null;
     }
-    public Token newNextToken() throws Exception {//token is getting returned as null in nextToken even though that is not allowed to happen so this will filter until it doesnt happen
+    public Token newNextToken() throws Exception {
     	Token newToken = nextToken();
     	while (newToken == null) {
     		newToken = nextToken();
@@ -234,11 +199,9 @@ public class CompilerScanner
         buf = removeSpacesAndComments(buf);
         for (int i=0; i<reserved.length; i++){
             if (buf.equals(reserved[i])){
-                //System.out.println(buf + "=" + reserved[i]);
                 return true;
             }
         }
-        //System.out.println("False on: " + buf);
         return false;
     }
     
@@ -248,7 +211,6 @@ public class CompilerScanner
         switch(state){
             case 1://IDENTIFIER, Possible Reserve
                 if (isResWord(buf)){
-                    //System.out.println(", "+T.RES);
                     for(int i = 0; i < reserved.length; i ++) {
                         if (buf.equals(reserved[i])){
                             System.out.println(", "+i);
@@ -259,9 +221,8 @@ public class CompilerScanner
                     return 44;//RESERVED WORD
                 }//NOT RESERVED W0RD. STORE IN SYMBOL TABLE.
                 
-                int symbolLocation = symbolTable.insert(buf, "variable", T.BOOL, scope, "true");
-                //System.out.println("Location of " + buf + "=" + location);
-                //System.out.println(", "+ T.IDENTIFIER + "\t Symbol Location: " + symbolLocation + "\t Symbol Scope: " + scope);
+                int symbolLocation = symbolTable.insert(buf, "var", T.PLUS, scope, "false");
+                System.out.println("Current Add: " + symbolTable.currentAdd);;
                 return T.IDENTIFIER;// +", "+buf;//final state ID
             case 2:
                 System.out.println(", "+T.NUMBER);
@@ -341,13 +302,10 @@ public class CompilerScanner
                     return T.PERIOD;// +", "+buf;
                 }
             case 13:
-                // System.out.println("<-- ERROR -- ILLEGAL CHARACTER" + buf);
                 return 13;//"Final state, scanner error, character.";
             case 14:
-                // System.out.println("ERROR -- STRING NOT TERMINATED");
                 return 14;//"Final state, scanner error, character.";
             default:
-                // System.out.println("ERROR");
                 return 15;
         }
     }

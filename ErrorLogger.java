@@ -1,4 +1,4 @@
-
+package Scanner;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.util.Date;
 public class ErrorLogger{
     public PrintWriter out;
     private String fileName;
+    
     public ErrorLogger(String outputFileName){
         try{
             fileName = outputFileName;
@@ -21,12 +22,12 @@ public class ErrorLogger{
             e.printStackTrace();
           }
     }
+    
     public void log(String stringPassed){
         try {
             FileWriter logger = new FileWriter(fileName, true);
             logger.append(stringPassed);
             logger.close();
-            // System.out.println("Successfully logged to the output file.");
           } catch (IOException e) {
             System.out.println("An error occurred while logging output file.");
             e.printStackTrace();

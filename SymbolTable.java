@@ -1,4 +1,4 @@
-
+package Scanner;
 
 public class SymbolTable {
 	public SymbolTableObject[] table;
@@ -10,9 +10,6 @@ public class SymbolTable {
 	public SymbolTable() {
 		table = new SymbolTableObject[100];
 		currentAdd = 0;
-//		for (int i = 0; i < table.length; i++) {
-//			table[i] = new SymbolTableObject();
-//		}
 	}
 	
 	/**
@@ -41,7 +38,6 @@ public class SymbolTable {
 		for (int i = 0; i < table.length; i++) {
 			if (table[i] == null) {
 				table[i] = newSymbol;
-				//System.out.println("success in " + i);
 				currentAdd = i;
 				return i;
 			}
@@ -65,6 +61,4 @@ public class SymbolTable {
 					"\t Declared: " + table[i].declared);
 		}
 	}
-	
-	
 }
