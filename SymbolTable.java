@@ -3,6 +3,7 @@ package Scanner;
 public class SymbolTable {
 	public SymbolTableObject[] table;
 	public int currentAdd;
+	public int tempNum = 0;
 	
 	/**
 	 * Default constructor
@@ -60,5 +61,15 @@ public class SymbolTable {
 					"\t Scope: " + table[i].scope +
 					"\t Declared: " + table[i].declared);
 		}
+	}
+	
+	/**
+	 * Insert blank symbol and return location
+	 * @return location of temp symbol
+	 */
+	public int getTemp() {
+		SymbolTableObject temp = new SymbolTableObject("@t" + tempNum);
+		tempNum++;
+		return insert(temp.name, temp.kind, temp.type, temp.scope, temp.declared);
 	}
 }

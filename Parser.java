@@ -35,6 +35,8 @@ public class Parser{
         System.out.println(string);
     }
     
+    // start grammar -----------------------------------------------------------------------------------------------------------------------------------------
+    
     private void program() throws Exception {
         Token firstToken = symbol;                                              //Program
         Token secondToken = s.nextToken();                                      //Add
@@ -252,7 +254,7 @@ public class Parser{
     
     private void statement() throws Exception {
         if (symbol.tokenType == T.IDENTIFIER) {
-        	if (s.symbolTable.table[s.symbolTable.currentAdd].declared != "false") {
+        	if (!s.symbolTable.table[s.symbolTable.currentAdd].declared.equals("false")) { //maybe change back to !=? ------
         		assignment_statement();
         	} else {
         		logger.customError("ERROR -- var not declared", s.line);
@@ -282,11 +284,28 @@ public class Parser{
     }
     
     private void assignment_statement() throws Exception {
+    	int place = symbol.value;//location of symbol in table
+    	if (s.symbolTable.table[place].declared.equals("false")) {
+    		logger.customError("ERROR -- indentifier is not declared in assignment_statement call", s.line);
+    	}
     	if (symbol.tokenType == T.IDENTIFIER) {
     		symbol = s.newNextToken();
     		if (symbol.tokenType == T.ASSIGN) {
     			symbol = s.newNextToken();
-            	expression();
+    			Exp x = new Exp();
+            	expression(x);
+            	
+            	if (s.symbolTable.table[place].type != x.type) { // if theyre not the same then error. added extra info for debugging the help
+            		logger.customError("ERROR -- table.type differs from x.type \n"
+            				+ "Table.type = " + s.symbolTable.table[place].type
+            				+ "X.type = " + x.type, s.line);
+            	} else { //not an error
+            		if (x.number)
+            			quads.insertQuad("ASSIGN", x.value+"", "-", place+"");
+            		else
+            			quads.insertQuad("ASSIGN", x.value+"", "-", "*"+place+"");
+            	}
+            	
             } else {
             	logger.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
             }
@@ -361,45 +380,178 @@ public class Parser{
         }
     }
     
-    private void expression() throws Exception {
-    	simple_expression();
+    private void expression(Exp x) throws Exception {
+    	simple_expression(x); // the Exp object,x, gets passed to simpleExpression
         if ((symbol.tokenType == T.LT) || (symbol.tokenType == T.GT) || (symbol.tokenType == T.EQUAL) || (symbol.tokenType == T.GE) || (symbol.tokenType == T.LE) || (symbol.tokenType == T.NE)) {
+        	//Converts the tokenType to a String
+        	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
-        	simple_expression();
+        	Exp w = new Exp();
+        	simple_expression(w);
+        	
+        	if (w.type != T.INTEGER) {
+        		logger.customError("ERROR -- Expression call expecting an INTEGER", s.line);
+        	} else {
+        		int tempAddress = s.symbolTable.getTemp();
+        		s.symbolTable.table[tempAddress].type = T.BOOL;
+        		s.symbolTable.table[tempAddress].kind = "TEMP";
+        		s.symbolTable.table[tempAddress].scope = s.scope;
+        		
+        		quads.insertQuad(convertValue(opCode), x.value+"", w.value+"", tempAddress+"");
+        		
+        		x.type = T.BOOL;
+        		x.value = tempAddress;
+        		x.number = false;
+        	}
         }
     }
     
-    private void simple_expression() throws Exception {
+    private void simple_expression(Exp x) throws Exception {
     	if (symbol.tokenType == T.MINUS) {
     		symbol = s.newNextToken();
     	}
-        term();
+    	int type1; //type of first operand
+    	int type2; //type of second operand
+    	int tempAddress = 0; //holds a temp address
+    	Exp y = new Exp();
+    	Exp z = new Exp();
+    	
+        term(y);
         while ((symbol.tokenType == T.PLUS) || (symbol.tokenType == T.MINUS) || (symbol.tokenType == T.OR)) {
+        	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
-        	term();
-        }
+        	term(z);
+        	type1 = y.type;
+        	type2 = z.type;
+        	
+        	if (type1 != type2)
+        		logger.customError("Error -- incompatable types", s.line);
+        	
+        	tempAddress = s.symbolTable.getTemp();
+        	s.symbolTable.table[tempAddress].type = type1;
+        	
+        	if (opCode == T.PLUS) {
+        		if (type1 != T.INTEGER || type2 != T.INTEGER) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("Add", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	}
+        	
+        	if (opCode == T.MINUS) {
+        		if (type1 != T.INTEGER || type2 != T.INTEGER) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("Sub", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	}
+        	
+        	if (opCode == T.OR) {
+        		if (type1 != T.BOOL || type2 != T.BOOL) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("Sub", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	}
+        	
+        	y.type = type1;
+        	y.value = tempAddress;
+        	y.number = false;//packet doesn have a bool for this but it does for term? if broken maybe try a bool?
+        }//end while loop
+        x.type = y.type;//bool ditto as above ^^^
+        x.value = y.value;
+        x.number = y.number;
     }
     
-    private void term() throws Exception {
-        factor();
+    private void term(Exp x) throws Exception {
+    	int type1;
+    	int type2;
+    	Exp y = new Exp();
+    	Exp z = new Exp();
+    	int tempAddress;
+    	
+        factor(y);
         while ((symbol.tokenType == T.TIMES) || (symbol.tokenType == T.DIV)|| (symbol.tokenType == T.MOD) || (symbol.tokenType == T.AND)) {
+        	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
-        	factor();
-        }
+        	factor(z); //now we have info about two operands
+        	
+        	type1 = y.type;
+        	type2 = z.type;
+        	
+        	if (type1 != type2)
+        		logger.customError("Error -- incompatable types", s.line);
+        	
+        	tempAddress = s.symbolTable.getTemp();
+        	s.symbolTable.table[tempAddress].type = type1;
+        	
+        	if (opCode == T.DIV) {
+        		if (type1 != T.INTEGER || type2 != T.INTEGER) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("Div", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	} else if (opCode == T.TIMES) {
+        		if (type1 != T.INTEGER || type2 != T.INTEGER) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("T", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	} else if (opCode == T.MOD) {
+        		if (type1 != T.INTEGER || type2 != T.INTEGER) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("T", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	} else if (opCode == T.AND) {
+        		if (type1 != T.BOOL || type2 != T.BOOL) {
+        			logger.customError("Error -- incompatable types", s.line);
+        		} else {
+        			quads.insertQuad("AND", y.value+"", z.value+"", tempAddress+"");
+        		}
+        	}//end of operator if statements
+        	
+        	y.type = type1;
+        	y.value = tempAddress;
+        	y.bool = false;
+        	y.number = false;
+        }//end of while loop
+        x.type = y.type; //these values sent back to the caller
+        x.value = y.value;
+        x.bool = y.bool;
+        x.number = y.number;
     }
     
-    private void factor() throws Exception{
-        if(symbol.tokenType == T.IDENTIFIER) 
-            symbol = s.newNextToken();
-        else if(symbol.tokenType == T.NUMBER) 
-            symbol = s.newNextToken();
-        else if (symbol.tokenType == T.BOOL) {
+    private void factor(Exp x) throws Exception{
+        if(symbol.tokenType == T.IDENTIFIER) {
+            if (s.symbolTable.table[symbol.value].declared.equals("true")) { 
+        		x.type = s.symbolTable.table[symbol.value].type; //symbol.value? correct or?
+        		x.value = symbol.value;
+        		x.number = false;
+        	} else { //id is not declared
+        		logger.customError("ERROR -- var not declared", s.line);
+        	}
         	symbol = s.newNextToken();
-            s.symbolTable.table[s.symbolTable.currentAdd].type = T.BOOL;
+        } else if(symbol.tokenType == T.NUMBER) {
+        	x.type = T.INTEGER;
+        	x.value = symbol.value;
+        	x.number = true;
+        	symbol = s.newNextToken();
+        } else if (symbol.tokenType == T.BOOL) {
+        	int tempAddress = s.symbolTable.getTemp();
+        	s.symbolTable.table[tempAddress].kind = "TEMP";
+        	s.symbolTable.table[tempAddress].scope = s.scope;
+        	s.symbolTable.table[tempAddress].type = T.BOOL;
+        	quads.insertQuad("NEG", x.value+"", "-", tempAddress+""); //is NEG suppose to be BOOL?
+        	x.type = T.BOOL;
+        	x.value = tempAddress;
+        	x.number = false;
+        	symbol = s.newNextToken();
+            s.symbolTable.table[s.symbolTable.currentAdd].type = T.BOOL; // this was a part of grammar not expression, does it belong?
         }	
         else if(symbol.tokenType == T.LPAREN) {
         	symbol = s.newNextToken();
-            expression();
+            expression(x);
            if (symbol.tokenType == T.RPAREN) {
         	   symbol = s.newNextToken();
            } else {
@@ -408,7 +560,10 @@ public class Parser{
         }
         else if(symbol.tokenType == T.NOT) {
         	symbol = s.newNextToken();
-            factor();
+            factor(x);
+            if (x.type == T.INTEGER) {
+            	logger.customError("Error -- Grammar expecting bool", s.line);
+            }
         }
         else {
         	logger.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s.line);
@@ -496,6 +651,39 @@ public class Parser{
         } else {
         	logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
         }
+    }
+    // end grammar -------------------------------------------------------------------------------------------------------------------------------------
+    
+    //Converts comparator to a string
+    public String convertValue(int value) {
+    	if (value == T.LT) {
+    		return "LT";
+    	} else if (value == T.GT) {
+    		return "GT";
+    	} else if (value == T.EQUAL) {
+    		return "EQUAL";
+    	} else if (value == T.GE) {
+    		return "GE";
+    	} else if (value == T.LE) {
+    		return "LE";
+    	} else if (value == T.NE) {
+    		return "NE";
+    	} else if (value == T.PLUS) {
+    		return "PLUS";
+    	} else if (value == T.MINUS) {
+    		return "MINUS";
+    	} else if (value == T.OR) {
+    		return "OR";
+    	} else if (value == T.PLUS) {
+    		return "ADD";
+    	} else if (value == T.MINUS) {
+    		return "Sub";
+    	} else if (value == T.DIV) {
+    		return "Div";
+    	} else if (value == T.MOD) {
+    		return "Mod";
+    	}
+    	return "NOT IN CONVERT METHOD"; //isnt anything
     }
 
     public static void main(String[] args) throws Exception{

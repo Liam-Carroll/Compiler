@@ -23,4 +23,12 @@ public class SymbolTableObject {
 		this.scope = -10;
 		this.declared = "Empty";
 	}
+	
+	public SymbolTableObject(String name) {
+		this.name = name;
+		this.kind = "Empty";
+		this.type = -10;
+		this.scope = -10;
+		this.declared = "Empty";
+	}
 }
