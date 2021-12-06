@@ -1,5 +1,3 @@
-package Scanner;
-
 import java.util.ArrayList;
 import java.util.Optional;
 

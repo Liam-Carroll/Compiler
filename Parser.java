@@ -1,5 +1,3 @@
-package Scanner;
-
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -52,7 +50,16 @@ public class Parser{
                 //progresses to next token
                 symbol = s.newNextToken();
                 variable_declarations();
+
+                int loc1 = quads.size(); //index of the next quad
+                quads.insertQuad("BR", "-", "-", ""+0); //the 0 is a place holder
+            
                 subprogram_declarations();
+
+                s.scope = 0; //set scope back to 0
+                int loc2 = quads.size(); //location of the next quad
+                quads.quads.get(loc1).result = ""+loc2; //sets the result field of quad[loc1] to loc2
+
                 compound_statement();
                 if (symbol.tokenType != T.PERIOD){
                     logger.customError("ERROR -- No period to end program", s.line);
@@ -315,14 +322,30 @@ public class Parser{
     }
     
     private void if_statement() throws Exception {
+        int loc1, loc2;//NOTE: We might not need the locations because we are using an ArrayList for our quads
+
         if (symbol.tokenType == T.IF) {
         	symbol = s.newNextToken();
-        	expression();
+
+            Exp exp = new Exp();
+        	expression(exp);
+
+            if (exp.type != T.BOOL)
+                logger.customError("ERROR -- EXPECTING BOOL", s.line);
+
+            loc1 = quads.size();
+            quads.insertQuad("BR0", exp.value+"", "-", "0");
+
         	if (symbol.tokenType == T.THEN) {
         		symbol = s.newNextToken();
         		statement();
         		if (symbol.tokenType == T.ELSE) {
         			symbol = s.newNextToken();
+
+                    loc2 = quads.size();
+                    quads.insertQuad("BR", "-", "-", "-");
+                    
+                    //STUCK HERE---------------------------------------------------------------------------------------------------------------
         			statement();
         		}
         	} else {
@@ -334,12 +357,27 @@ public class Parser{
     }
     
     private void while_statement() throws Exception{
+        int loc1, loc2; //NOTE: We might not need the locations because we are using an ArrayList for our quads
+
         if(symbol.tokenType == T.WHILE) {
         	symbol = s.newNextToken();
-            expression();
+
+            loc1 = quads.size(); //location of the next quad
+            Exp exp = new Exp();
+            expression(exp);
+
+            if (exp.type != T.BOOL)
+                logger.customError("ERROR -- EXPECTING BOOL", s.line);
+
+            loc2 = quads.size();//location of the next quad
+            quads.insertQuad("BR0", exp.value+"", "-", "0");
+
             if(symbol.tokenType == T.DO) {
             	symbol = s.newNextToken();
+
             	statement();
+                quads.insertQuad("BR", "-", "-", "0");
+
             } else {
             	logger.customError("ERROR -- EXPECTING DO", s.line);
             }
@@ -688,6 +726,7 @@ public class Parser{
 
     public static void main(String[] args) throws Exception{
         Parser p = new Parser();
+        //p.quads.printQuads();
         
     }
 }
