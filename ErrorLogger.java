@@ -1,4 +1,4 @@
- 
+package Scanner;  
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -34,10 +34,27 @@ public class ErrorLogger{
           }
     }
     
-    public void customError(String errorString, int line ) {
+    public void customError(String errorString, CompilerScanner s) {
+    	String fullErrorString;
+    	if (s != null) {
+    		fullErrorString = errorString + " at line "+s.line;
+    	} else {
+    		fullErrorString = errorString + "At Line Null (Error was in SymbolTable)";
+    	}
+        System.out.println(fullErrorString);
+        log(fullErrorString);
+        System.out.println("\n\n\n\n\n\n\n ");
+        if (s != null)
+        	s.symbolTable.print();
+        
+        System.exit(0);//kill process after first error is logged
+    }
+    
+    public void customError(String errorString, int line) {
         String fullErrorString = errorString + " at line "+line;
         System.out.println(fullErrorString);
         log(fullErrorString);
+        //s.symbolTable.print();
         System.exit(0);//kill process after first error is logged
     }
 }

@@ -1,4 +1,4 @@
-
+package Scanner; 
 
 public class StringTable {
 	public String[] table;
@@ -44,6 +44,15 @@ public class StringTable {
 		}
 		System.out.println("ERROR");
 		return -1; // error, could not find empty location or already existing symbol
+	}
+	
+	//Grabs the most recent string in the table
+	public String grabRecent() {
+		for (int i = 99; i >= 0; i--) {
+			if (table[i] != null)
+				return i+1000+"";
+		}
+		return "error";
 	}
 	
 }

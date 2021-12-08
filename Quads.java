@@ -1,3 +1,4 @@
+package Scanner; 
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -18,11 +19,17 @@ public class Quads {
         //parse args
         String[] quadArgs = parseQuadArgs(_operator, _arg1, _arg2, _result);
         //create quad
-        Quad newQuad = new Quad(quadArgs[0], quadArgs[1], quadArgs[2], quadArgs[3]);
+        Quad newQuad = new Quad(quadArgs[0].toUpperCase(), quadArgs[1], quadArgs[2], quadArgs[3]);
         //add to quads arraylist
         quads.add(newQuad);
         System.out.println("Adding Quad: "+ newQuad.returnFullString());
-        logger.log("Adding Quad: "+ newQuad.returnFullString()+"\n");
+        //logger.log("Adding Quad: "+ newQuad.returnFullString()+"\n");
+    }
+    
+    public void logQuads() {
+    	for (int i = 0; i < quads.size(); i++) {
+    		logger.log("Adding Quad: "+ quads.get(i).returnFullString()+"\n");
+    	}
     }
     
     public void insertQuad(int index, String _operator, String _arg1, String _arg2, String _result){
@@ -81,6 +88,8 @@ public class Quads {
         outputArg = outputArg.equals("") ? "-" : outputArg;
         return outputArg;
     }
+    
+    
 
     //Getters and setters can be done by: quads.get(index).<desired characteristic> = <<new characteristic>>
 }

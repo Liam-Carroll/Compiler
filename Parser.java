@@ -1,3 +1,4 @@
+package Scanner; 
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -6,6 +7,8 @@ public class Parser{
     Token symbol;
     ErrorLogger logger;
     Quads quads;
+    int[] locals = new int[20]; //index by scope number
+    int callCounter = 0;
  
     public Parser() throws Exception{
     	quads = new Quads();
@@ -18,7 +21,7 @@ public class Parser{
             s = new CompilerScanner(fileName);
         } catch (IOException e) {
             System.out.println("Error: Parser Constructor::Scanner Init::problem with filename passed.");
-            logger.customError("ERROR -- Parser Constructor::Scanner Init::problem with filename passed.", s.line);
+            logger.customError("ERROR -- Parser Constructor::Scanner Init::problem with filename passed.", s);
             e.printStackTrace();
         }
         input.close();
@@ -27,6 +30,7 @@ public class Parser{
         symbol = s.newNextToken();
         //move to start method
         program();
+        
     }
     
     private void error(String string) {
@@ -52,19 +56,32 @@ public class Parser{
                 variable_declarations();
 
                 int loc1 = quads.size(); //index of the next quad
-                quads.insertQuad("BR", "-", "-", ""+0); //the 0 is a place holder
+                System.out.println("JAJHIAADBHIASDASDASDBUHASDASD");
+                quads.insertQuad("BR", "-", "-", "BUTTHOLE"+(loc1+1)); //the 0 is a place holder
             
                 subprogram_declarations();
 
                 s.scope = 0; //set scope back to 0
                 int loc2 = quads.size(); //location of the next quad
-                quads.quads.get(loc1).result = ""+loc2; //sets the result field of quad[loc1] to loc2
+
+                
+                //fill in quad at loc1 with location counter, same as while statement?
+                Quad temp = quads.quads.get(loc1);
+                temp.result = ""+ (quads.size());//maybe -1?
+                quads.quads.set(loc1, temp);
 
                 compound_statement();
-                if (symbol.tokenType != T.PERIOD){
-                    logger.customError("ERROR -- No period to end program", s.line);
+                if (symbol.tokenType == T.PERIOD){
+                    quads.insertQuad("END", "-", "-", "-");
+                    quads.logQuads();//LOGS ALL QUADS TO THE TEXT FILE
+                } else {
+                	logger.customError("ERROR -- No period to end program", s);
                 }
+                
+                //Prints results of symbol table and quads
                 s.symbolTable.print();
+                quads.printQuads();
+                
             }catch(Exception e){
                 e.printStackTrace();
             } 
@@ -80,18 +97,22 @@ public class Parser{
         	sem.count++;
             symbol = s.newNextToken();//------------------------------
             s.symbolTable.table[s.symbolTable.currentAdd].declared = "true";
+            locals[s.scope]++; //for locals
+        	s.symbolTable.table[s.symbolTable.currentAdd].offset = locals[s.scope];//sets the offset
             while (symbol.tokenType == T.COMMA) {
                 symbol = s.newNextToken();
                 if (symbol.tokenType == T.IDENTIFIER) {
                 	sem.count++;
                 	symbol = s.newNextToken();
                 	s.symbolTable.table[s.symbolTable.currentAdd].declared = "true";
+                	locals[s.scope]++; //for locals
+                	s.symbolTable.table[s.symbolTable.currentAdd].offset = locals[s.scope];//sets the offset
                 } else {
-                	logger.customError("ERROR -- EXPECTING ID", s.line);
+                	logger.customError("ERROR -- EXPECTING ID", s);
                 }
             }
         }else{
-            logger.customError("ERROR -- identifier_list:: no identifier in list", s.line);
+            logger.customError("ERROR -- identifier_list:: no identifier in list", s);
         }
     }
     
@@ -117,12 +138,12 @@ public class Parser{
                 	if (symbol.tokenType == T.SEMI) {
                 		symbol = s.newNextToken();
                 	} else {
-                		logger.customError("ERROR -- Expecting ';'", s.line);
+                		logger.customError("ERROR -- Expecting ';'", s);
                 	}
                 }
 
             }else {
-                logger.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s.line);
+                logger.customError("ERROR -- variable_declarations::Missing ';' to end variable declaration", s);
             }
         }
     }
@@ -133,7 +154,7 @@ public class Parser{
             symbol = s.newNextToken();
             type(sem);
         }else{
-            logger.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s.line);
+            logger.customError("ERROR -- variable_declaration::Missing ':' between identifier_list and type", s);
         }
     }
     
@@ -145,7 +166,7 @@ public class Parser{
         	symbol = s.newNextToken();
         	sem.type = T.BOOL;
         } else{
-            logger.customError("ERROR -- type::Missing type", s.line);
+            logger.customError("ERROR -- type::Missing type", s);
         }
     }
     
@@ -156,7 +177,7 @@ public class Parser{
                 symbol = s.newNextToken();
                 subprogram_declarations();
             } else {
-            	logger.customError("ERROR -- Expecting ';'", s.line);
+            	logger.customError("ERROR -- Expecting ';'", s);
             }
         }
     }
@@ -166,47 +187,58 @@ public class Parser{
         variable_declarations();
         compound_statement();
         s.decScope();
+        quads.insertQuad("EXIT", "-", "-", "-");
     }
     private void subprogram_head() throws Exception {
+    	int place = 0; //address for the name in the symbol table
+    	int loc1 = 0; //holds tge address of the next quads
         if (symbol.tokenType == T.PROCEDURE) {
             symbol = s.newNextToken();
             s.symbolTable.table[s.symbolTable.currentAdd].kind = "procedure_name";
             s.symbolTable.table[s.symbolTable.currentAdd].type = T.PROCEDURE;
             s.symbolTable.table[s.symbolTable.currentAdd].scope = 0;
             if (symbol.tokenType == T.IDENTIFIER) {
+            	place = s.symbolTable.currentAdd;
+            	loc1 = quads.size();//suppose to be the index of the next quad
+            	s.symbolTable.table[place].start = loc1;
+            	quads.insertQuad("PROCDEC", "-", "-", place+"");
+            	s.symbolTable.table[place].type = T.PROCEDURE;
+            	if (!s.symbolTable.table[place].declared.equals("false"))     // double check lol     		
+            		logger.customError("Error -- variable already declared in subhead", s);
+            	
                 symbol = s.newNextToken();
-                s.symbolTable.table[s.symbolTable.currentAdd].declared = arguments() + "";
+                s.symbolTable.table[s.symbolTable.currentAdd].declared = arguments(place) + "";
                 if (symbol.tokenType == T.SEMI) {
                     symbol = s.newNextToken();
                 }else{
-                    logger.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s.line);
+                    logger.customError("ERROR -- subprogram_head::Missing semicolon ';' after arguments", s);
                 }
             }else{
-                logger.customError("ERROR -- subprogram_head::Missing Identifier after procedure", s.line);
+                logger.customError("ERROR -- subprogram_head::Missing Identifier after procedure", s);
             }
             
         }else{
-            logger.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s.line);
+            logger.customError("ERROR -- subprogram_head::Missing 'procedure' declaration", s);
         }
     }
     
-    private int arguments() throws Exception {
+    private int arguments(int place) throws Exception {//place is the address of the procedure
     	Semantics sem = new Semantics();
         if (symbol.tokenType == T.LPAREN) {
             symbol = s.newNextToken();
-            sem = parameter_list();
+            sem = parameter_list(place);
             if (symbol.tokenType == T.RPAREN) {
                 symbol = s.newNextToken();  
             }else{
-                logger.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s.line);
+                logger.customError("ERROR -- arguments::Missing right parenthesis after parameter list", s);
             }
         }else{
-            logger.customError("ERROR -- arguments::Missing left parenthesis before parameter list", s.line);
+            logger.customError("ERROR -- arguments::Missing left parenthesis before parameter list", s);
         }
         return sem.count;
     }
     
-    private Semantics parameter_list() throws Exception{
+    private Semantics parameter_list(int place) throws Exception{
     	Semantics sem = new Semantics();
     	
         identifier_list(sem);
@@ -215,7 +247,13 @@ public class Parser{
             type(sem);
             for (int j = sem.start; j < (sem.start + sem.count); j++) {
             	s.symbolTable.table[j].type = sem.type;
+            	s.symbolTable.table[place].numArgs++; //incraments arguments for param
+            	quads.insertQuad("PARAM","-","-", j+"");
+            	s.symbolTable.table[j].offset = s.symbolTable.table[place].numArgs;
+            	s.symbolTable.table[j].kind = "PARAM";
+
             }
+            System.out.println("AFTER FOR LOOP NUMARGS-----------------------------: " + s.symbolTable.table[place].numArgs);
             while (symbol.tokenType == T.SEMI) {
             	symbol = s.newNextToken();
             	identifier_list(sem);
@@ -223,15 +261,24 @@ public class Parser{
             		symbol = s.newNextToken();
             		type(sem);
             		for (int j = sem.start; j < (sem.start + sem.count); j++) {
-                    	s.symbolTable.table[j].type = sem.type;
+            			s.symbolTable.table[j].type = sem.type;
+                    	s.symbolTable.table[place].numArgs++; //incraments arguments for param
+                    	quads.insertQuad("PARAM","-","-", j+"");
+                    	s.symbolTable.table[j].offset = s.symbolTable.table[place].numArgs;
+                    	s.symbolTable.table[j].kind = "PARAM";
+                    	if (!s.symbolTable.table[place].declared.equals("false")) {
+                    		logger.customError("ERROR -- already decalred", s);
+                    	} else {
+                    		s.symbolTable.table[j].declared = "true";
+                    	}
                     }
             	} else {
-            		logger.customError("ERROR -- Expecting ':'", s.line);
+            		logger.customError("ERROR -- Expecting ':'", s);
             	}
             }
             
         } else {
-        	logger.customError("ERROR -- EXPECTING COLON", s.line);
+        	logger.customError("ERROR -- EXPECTING COLON", s);
         }
         return sem;
     }
@@ -239,20 +286,23 @@ public class Parser{
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
             symbol = s.newNextToken();
+            System.out.println("Token from compound statemet going into statement_list: ---------------" + symbol.tokenType);
             statement_list();
+            System.out.println("Token after statementlist in compound_statement:" + symbol.tokenType);
             if (symbol.tokenType == T.END) {
                 symbol = s.newNextToken();
             }else{
-                logger.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s.line);
+                logger.customError("ERROR -- compound_statement::EXPECTING END  after statement_list in compound statement", s);
             }
 
         }else{
-            logger.customError("ERROR -- compound_statement::EXPECTING BEGIN before statement_list in compound statement", s.line);
+            logger.customError("ERROR -- compound_statement::EXPECTING BEGIN before statement_list in compound statement", s);
         }
     }
     
     private void statement_list() throws Exception{
         statement();
+        System.out.println("TOKEN COMING OUT OF STATEMENT IN STATEMENT LIST:" + symbol.tokenType);
         while(symbol.tokenType == T.SEMI) {
             symbol = s.newNextToken();
             statement();
@@ -263,8 +313,9 @@ public class Parser{
         if (symbol.tokenType == T.IDENTIFIER) {
         	if (!s.symbolTable.table[s.symbolTable.currentAdd].declared.equals("false")) { //maybe change back to !=? ------
         		assignment_statement();
+        		System.out.println("TOKEN AFTER STATEMENT ASSIGNMENT STATEMENT: " + symbol.tokenType);
         	} else {
-        		logger.customError("ERROR -- var not declared", s.line);
+        		logger.customError("ERROR -- var not declared", s);
         	}
         }
         else if (symbol.tokenType == T.CALL) {
@@ -293,31 +344,33 @@ public class Parser{
     private void assignment_statement() throws Exception {
     	int place = symbol.value;//location of symbol in table
     	if (s.symbolTable.table[place].declared.equals("false")) {
-    		logger.customError("ERROR -- indentifier is not declared in assignment_statement call", s.line);
+    		logger.customError("ERROR -- indentifier is not declared in assignment_statement call", s);
     	}
     	if (symbol.tokenType == T.IDENTIFIER) {
+    		String currentName = symbol.name;
     		symbol = s.newNextToken();
     		if (symbol.tokenType == T.ASSIGN) {
     			symbol = s.newNextToken();
     			Exp x = new Exp();
             	expression(x);
+            	System.out.println("Token after expressio i SHAHAHAHAHAHAHAHAHAH: " + symbol.tokenType);
             	
             	if (s.symbolTable.table[place].type != x.type) { // if theyre not the same then error. added extra info for debugging the help
             		logger.customError("ERROR -- table.type differs from x.type \n"
             				+ "Table.type = " + s.symbolTable.table[place].type
-            				+ "X.type = " + x.type, s.line);
+            				+ "X.type = " + x.type, s);
             	} else { //not an error
             		if (x.number)
-            			quads.insertQuad("ASSIGN", x.value+"", "-", place+"");
+            			quads.insertQuad("ASSIGN", "*"+x.value+"", "-", s.symbolTable.search(currentName, s.scope)+"");
             		else
-            			quads.insertQuad("ASSIGN", x.value+"", "-", "*"+place+"");
+            			quads.insertQuad("ASSIGN", x.value+"", "-", s.symbolTable.search(currentName, s.scope)+"");
             	}
             	
             } else {
-            	logger.customError("ERROR -- EXPECTING ASSIGNMENT OP", s.line);
+            	logger.customError("ERROR -- EXPECTING ASSIGNMENT OP", s);
             }
     	} else {
-    		logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+    		logger.customError("ERROR -- EXPECTING IDENTIFIER", s);
     	}
     }
     
@@ -328,31 +381,50 @@ public class Parser{
         	symbol = s.newNextToken();
 
             Exp exp = new Exp();
+            System.out.println("Token before expression for then in if statementxxxxxxxxxxxx:" + symbol.tokenType);
         	expression(exp);
+        	System.out.println("Token before checking for then in if statementxxxxxxxxxxxxxxx:" + symbol.tokenType);
 
             if (exp.type != T.BOOL)
-                logger.customError("ERROR -- EXPECTING BOOL", s.line);
+                logger.customError("ERROR -- EXPECTING BOOL", s);
 
             loc1 = quads.size();
-            quads.insertQuad("BR0", exp.value+"", "-", "0");
+            quads.insertQuad("BR0", exp.value+"", "-", "0");//ahhhhh
 
         	if (symbol.tokenType == T.THEN) {
         		symbol = s.newNextToken();
         		statement();
+        		System.out.println("TOKEN AFTER STATEMENT IN IF STATEMENT IS: " + symbol.tokenType);
+        		symbol = s.newNextToken();//maybe remove this for checking stuff HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
         		if (symbol.tokenType == T.ELSE) {
         			symbol = s.newNextToken();
 
-                    loc2 = quads.size();
+                    loc2 = quads.size();//-1?
                     quads.insertQuad("BR", "-", "-", "-");
                     
-                    //STUCK HERE---------------------------------------------------------------------------------------------------------------
-        			statement();
+                    //fill in quad at loc1 with location counter, same as while statement?
+                    Quad temp = quads.quads.get(loc1);
+                    temp.result = ""+ (quads.size());//maybe -1?
+                    quads.quads.set(loc1, temp);
+                    
+                    statement();
+                    
+                    //fill in quad at loc2 with location counter, same as while statemet?
+                    Quad temp2 = quads.quads.get(loc2);
+                    temp2.result = ""+ (quads.size());//maybe -1?
+                    quads.quads.set(loc2, temp2);
+                    
+        		} else {
+        			//fill in quad at loc1 with location counter, same as while statement?
+                    Quad temp = quads.quads.get(loc1);
+                    temp.result = ""+ (quads.size());//maybe -1?
+                    quads.quads.set(loc1, temp);
         		}
         	} else {
-        		logger.customError("ERROR -- EXPECTING THEN", s.line);
+        		logger.customError("ERROR -- EXPECTING THEN", s);
         	}
         } else {
-        	logger.customError("ERROR -- EXPECTING IF STATEMENT", s.line);
+        	logger.customError("ERROR -- EXPECTING IF STATEMENT", s);
         }
     }
     
@@ -367,7 +439,7 @@ public class Parser{
             expression(exp);
 
             if (exp.type != T.BOOL)
-                logger.customError("ERROR -- EXPECTING BOOL", s.line);
+                logger.customError("ERROR -- EXPECTING BOOL", s);
 
             loc2 = quads.size();//location of the next quad
             quads.insertQuad("BR0", exp.value+"", "-", "0");
@@ -376,75 +448,120 @@ public class Parser{
             	symbol = s.newNextToken();
 
             	statement();
-                quads.insertQuad("BR", "-", "-", "0");
-
+                quads.insertQuad("BR", "-", "-", loc1+"");
+                //enter current quad number at loc2? ralph says this but idk what it means
+                Quad temp = quads.quads.get(loc2);
+                temp.result = ""+ (quads.size());//maybe -1
+                quads.quads.set(loc2, temp);
             } else {
-            	logger.customError("ERROR -- EXPECTING DO", s.line);
+            	logger.customError("ERROR -- EXPECTING DO", s);
             }
         } else {
-        	logger.customError("ERROR -- EXPECTING WHILE", s.line);
+        	logger.customError("ERROR -- EXPECTING WHILE", s);
         }
     }
     
     private void procedure_statement() throws Exception {
+    	int paramCount = 0;
+    	int start = 0;
+    	String name;
         if (symbol.tokenType == T.CALL) {
+        	callCounter++;
         	symbol = s.newNextToken();
         	if (symbol.tokenType == T.IDENTIFIER) {
+        		s.symbolTable.table[symbol.value].declared = "true";//this fixes recursive programs but if it breaks it then ope ----------------------------------------------------------
+        		name = symbol.name;
+        		start = s.symbolTable.search(name, 0);
+        		
         		symbol = s.newNextToken();
         		if (symbol.tokenType == T.LPAREN) {
         			symbol = s.newNextToken();
-        			expression_list();
+        			paramCount = expression_list();
         			if (symbol.tokenType == T.RPAREN) {
         				symbol = s.newNextToken();
+        				if (s.symbolTable.table[start].numArgs == paramCount) {
+        					quads.insertQuad("CALL", start+"", paramCount+"","-");
+        				} else {
+        					System.out.println("ParamCount: " + paramCount);
+        					System.out.println("ProcedureCount For Start Being " + start + ": " + s.symbolTable.table[start].numArgs);
+        					logger.customError("ERROR -- ParamCount is not the same as argCount in procedure_statement() call", s);
+        				}
+        				
         			} else {
-        				logger.customError("ERROR -- EXPECTING RIGHT PARAM", s.line);
+        				logger.customError("ERROR -- EXPECTING RIGHT PARAM", s);
         			}
         		} else {
-        			logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING LEFT PAREN", s);
         		}
         	} else {
-        		logger.customError("ERROR -- EXPECING IDENTIFIER", s.line);
+        		logger.customError("ERROR -- EXPECING IDENTIFIER", s);
         	}
         } else {
-        	logger.customError("ERROR -- EXPECTING CALL", s.line);
+        	logger.customError("ERROR -- EXPECTING CALL", s);
         }
     }
     
-    private void expression_list() throws Exception{
-        expression();
+    private int expression_list() throws Exception{
+    	int count = 0;
+    	Exp x = new Exp();
+        expression(x);
+        quads.insertQuad("ARG", "-", "-", x.value+"");
+        if (x.type != T.INTEGER)
+        	logger.customError("ERROR -- x.type != T.INTEGER in expression_list() call", s);
+        
+        count++;
         while(symbol.tokenType == T.COMMA) {
             symbol = s.newNextToken();
-            expression();
+            x = new Exp();
+            expression(x);
+            quads.insertQuad("ARG", "-", "-", x.value+"");
+            if (x.type != T.INTEGER)
+            	logger.customError("ERROR -- x.type != T.INTEGER in expression_list() call", s);
+            
+            count++;
         }
+        return count;//number of parameters
     }
     
     private void expression(Exp x) throws Exception {
     	simple_expression(x); // the Exp object,x, gets passed to simpleExpression
+    	System.out.println("CURRENT TOKEN IS------------------------------------: " + symbol.tokenType);
         if ((symbol.tokenType == T.LT) || (symbol.tokenType == T.GT) || (symbol.tokenType == T.EQUAL) || (symbol.tokenType == T.GE) || (symbol.tokenType == T.LE) || (symbol.tokenType == T.NE)) {
         	//Converts the tokenType to a String
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
         	Exp w = new Exp();
         	simple_expression(w);
+        	System.out.println("Token coming out of simp_exp in exp:AAAAAAAAAAA: " + symbol.tokenType);
         	
         	if (w.type != T.INTEGER) {
-        		logger.customError("ERROR -- Expression call expecting an INTEGER", s.line);
+        		logger.customError("ERROR -- Expression call expecting an INTEGER", s);
         	} else {
         		int tempAddress = s.symbolTable.getTemp();
-        		s.symbolTable.table[tempAddress].type = T.BOOL;
+        		s.symbolTable.table[tempAddress].type = T.INTEGER; //maybe needs to be bool? fuck
         		s.symbolTable.table[tempAddress].kind = "TEMP";
         		s.symbolTable.table[tempAddress].scope = s.scope;
+        		locals[s.scope]++;
+        		s.symbolTable.table[tempAddress].offset = locals[s.scope];
         		
-        		quads.insertQuad(convertValue(opCode), x.value+"", w.value+"", tempAddress+"");
-        		
+        		String xVal = x.value+"";
+        		String wVal = w.value+"";
+        		if (x.number)
+        			xVal = "*"+x.value;
+        		if (w.number)
+        			wVal = "*"+w.value;
+        		System.out.println("OPCODE IS: " + opCode);
+        		quads.insertQuad(convertValue(opCode), xVal, wVal, tempAddress+"");
         		x.type = T.BOOL;
         		x.value = tempAddress;
         		x.number = false;
+        		System.out.println("Token after inserting GT: " + symbol.tokenType);
         	}
         }
     }
     
     private void simple_expression(Exp x) throws Exception {
+    	System.out.println("Token going into simple_expression: " + symbol.tokenType);
     	if (symbol.tokenType == T.MINUS) {
     		symbol = s.newNextToken();
     	}
@@ -455,6 +572,7 @@ public class Parser{
     	Exp z = new Exp();
     	
         term(y);
+        System.out.println("Token coming out of term within simp_exp@@@@@2:" + symbol.tokenType);
         while ((symbol.tokenType == T.PLUS) || (symbol.tokenType == T.MINUS) || (symbol.tokenType == T.OR)) {
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
@@ -463,32 +581,40 @@ public class Parser{
         	type2 = z.type;
         	
         	if (type1 != type2)
-        		logger.customError("Error -- incompatable types", s.line);
+        		logger.customError("Error -- incompatable types in simple_expression", s);
         	
         	tempAddress = s.symbolTable.getTemp();
+        	tempAddress = tempAddress - callCounter;;
         	s.symbolTable.table[tempAddress].type = type1;
+        	
+        	String yVal = y.value+"";
+    		String zVal = z.value+"";
+    		if (y.number)
+    			yVal = "*"+y.value;
+    		if (z.number)
+    			zVal = "*"+z.value;
         	
         	if (opCode == T.PLUS) {
         		if (type1 != T.INTEGER || type2 != T.INTEGER) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in simple_exp plus. Type 1: " + type1 + ", Type 2: " + type2, s);
         		} else {
-        			quads.insertQuad("Add", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("ADD", yVal, zVal, tempAddress+"");
         		}
         	}
         	
         	if (opCode == T.MINUS) {
         		if (type1 != T.INTEGER || type2 != T.INTEGER) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in simp_exp minus", s);
         		} else {
-        			quads.insertQuad("Sub", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("SUB", yVal, zVal, tempAddress+"");
         		}
         	}
         	
         	if (opCode == T.OR) {
         		if (type1 != T.BOOL || type2 != T.BOOL) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in simp_exp or", s);
         		} else {
-        			quads.insertQuad("Sub", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("OR", yVal, zVal, tempAddress+"");
         		}
         	}
         	
@@ -508,7 +634,9 @@ public class Parser{
     	Exp z = new Exp();
     	int tempAddress;
     	
+    	System.out.println("TOKEN GOING INTO OF FACTOR WITHIN TERM CALL--------------------------------------: " + symbol.tokenType);
         factor(y);
+        System.out.println("TOKEN COMING OUT OF FACTOR WITHIN TERM CALL--------------------------------------: " + symbol.tokenType);
         while ((symbol.tokenType == T.TIMES) || (symbol.tokenType == T.DIV)|| (symbol.tokenType == T.MOD) || (symbol.tokenType == T.AND)) {
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
@@ -517,35 +645,46 @@ public class Parser{
         	type1 = y.type;
         	type2 = z.type;
         	
+        	//System.out.println("---------------------------Type1: " + type1); //tests 
+        	//System.out.println("------------------------------Type2: " + type2);
+        	
         	if (type1 != type2)
-        		logger.customError("Error -- incompatable types", s.line);
+        		logger.customError("Error -- incompatable types", s);
         	
         	tempAddress = s.symbolTable.getTemp();
+        	tempAddress = tempAddress - callCounter;
         	s.symbolTable.table[tempAddress].type = type1;
+        	
+        	String yVal = y.value+"";
+    		String zVal = z.value+"";
+    		if (y.number)
+    			yVal = "*"+y.value;
+    		if (z.number)
+    			zVal = "*"+z.value;
         	
         	if (opCode == T.DIV) {
         		if (type1 != T.INTEGER || type2 != T.INTEGER) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in term div", s);
         		} else {
-        			quads.insertQuad("Div", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("DIV", yVal, zVal, tempAddress+"");
         		}
         	} else if (opCode == T.TIMES) {
         		if (type1 != T.INTEGER || type2 != T.INTEGER) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in term times", s);
         		} else {
-        			quads.insertQuad("T", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("TIMES", yVal, zVal, tempAddress+"");
         		}
         	} else if (opCode == T.MOD) {
         		if (type1 != T.INTEGER || type2 != T.INTEGER) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in term mod", s);
         		} else {
-        			quads.insertQuad("T", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("MOD", yVal, zVal, tempAddress+"");
         		}
         	} else if (opCode == T.AND) {
         		if (type1 != T.BOOL || type2 != T.BOOL) {
-        			logger.customError("Error -- incompatable types", s.line);
+        			logger.customError("Error -- incompatable types in term and", s);
         		} else {
-        			quads.insertQuad("AND", y.value+"", z.value+"", tempAddress+"");
+        			quads.insertQuad("AND", yVal, zVal, tempAddress+"");
         		}
         	}//end of operator if statements
         	
@@ -562,12 +701,15 @@ public class Parser{
     
     private void factor(Exp x) throws Exception{
         if(symbol.tokenType == T.IDENTIFIER) {
-            if (s.symbolTable.table[symbol.value].declared.equals("true")) { 
+            if (!s.symbolTable.table[symbol.value].declared.equals("false")) { 
+            	symbol.value = s.symbolTable.search(symbol.name, s.scope);
         		x.type = s.symbolTable.table[symbol.value].type; //symbol.value? correct or?
+        		//System.out.println("AHHHHHHHHHHHHHHHHHHHHH: " + s.symbolTable.table[symbol.value].kind);
         		x.value = symbol.value;
         		x.number = false;
         	} else { //id is not declared
-        		logger.customError("ERROR -- var not declared", s.line);
+        		s.symbolTable.table[symbol.value].printAsString();
+        		logger.customError("ERROR -- var not declared in factor", s);
         	}
         	symbol = s.newNextToken();
         } else if(symbol.tokenType == T.NUMBER) {
@@ -580,6 +722,8 @@ public class Parser{
         	s.symbolTable.table[tempAddress].kind = "TEMP";
         	s.symbolTable.table[tempAddress].scope = s.scope;
         	s.symbolTable.table[tempAddress].type = T.BOOL;
+        	locals[s.scope]++;
+    		s.symbolTable.table[tempAddress].offset = locals[s.scope];
         	quads.insertQuad("NEG", x.value+"", "-", tempAddress+""); //is NEG suppose to be BOOL?
         	x.type = T.BOOL;
         	x.value = tempAddress;
@@ -593,18 +737,18 @@ public class Parser{
            if (symbol.tokenType == T.RPAREN) {
         	   symbol = s.newNextToken();
            } else {
-        	   logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        	   logger.customError("ERROR -- EXPECTING RIGHT PAREN", s);
            }
         }
         else if(symbol.tokenType == T.NOT) {
         	symbol = s.newNextToken();
             factor(x);
             if (x.type == T.INTEGER) {
-            	logger.customError("Error -- Grammar expecting bool", s.line);
+            	logger.customError("Error -- Grammar expecting bool", s);
             }
         }
         else {
-        	logger.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s.line);
+        	logger.customError("ERROR -- EXPECING SOME KIND OF FACTOR", s);
         }
     }
     
@@ -617,13 +761,13 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s);
         		}
             } else {
-            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s);
             }
         } else {
-        	logger.customError("ERROR -- EXPECTING READ", s.line);
+        	logger.customError("ERROR -- EXPECTING READ", s);
         }
     }
     
@@ -636,13 +780,13 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s);
         		}
             } else {
-            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s);
             }
         } else {
-        	logger.customError("ERROR -- EXPECTING WRITE", s.line);
+        	logger.customError("ERROR -- EXPECTING WRITE", s);
         }
     }
     
@@ -655,39 +799,52 @@ public class Parser{
         		if (symbol.tokenType == T.RPAREN) {
         			symbol = s.newNextToken();
         		} else {
-        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s.line);
+        			logger.customError("ERROR -- EXPECTING RIGHT PAREN", s);
         		}
             } else {
-            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s.line);
+            	logger.customError("ERROR -- EXPECTING LEFT PAREN", s);
             }
         } else {
-        	logger.customError("ERROR -- EXPECTING WRITELN", s.line);
+        	logger.customError("ERROR -- EXPECTING WRITELN", s);
         }
     }
     
     private void output_item() throws Exception{
         if(symbol.tokenType == T.STRING) {
         	symbol = s.newNextToken();
+        	
+        	String stringLoc = s.stringTable.grabRecent();
+        	if (stringLoc.equals("error"))
+        		logger.customError("ERROR -- StringTable is empty", s);
+        	
+        	quads.insertQuad("WRITE", "-", "-", stringLoc);
         } else if ((symbol.tokenType == T.MINUS) || (symbol.tokenType == T.IDENTIFIER) || (symbol.tokenType == T.NUMBER) || (symbol.tokenType == T.BOOL) || (symbol.tokenType == T.LPAREN) || (symbol.tokenType == T.NOT)) {
-        	expression();
+        	System.out.println("SizeContent:" + s.symbolTable.contentSize());
+        	Exp x = new Exp(); //ralph didnt put this on the sheet but expression needs an x so idk wtf he wants
+        	expression(x);
+        	quads.insertQuad("WRITE", "-", "-", x.value+"");//we had to make this ralph didnt give to us so may be wrong
         } else {
-        	logger.customError("ERROR -- Missing expression", s.line);
+        	logger.customError("ERROR -- Missing expression", s);
         }
     }
     
     private void input_list() throws Exception{
         if(symbol.tokenType == T.IDENTIFIER) {
+        	String currentName = symbol.name;
             symbol = s.newNextToken();
+            quads.insertQuad("INPUT", "-", "-", s.symbolTable.search(currentName, s.scope)+"");
             while(symbol.tokenType == T.COMMA) {
                 symbol = s.newNextToken();
                 if (symbol.tokenType == T.IDENTIFIER) {
+                	currentName = symbol.name;
                 	symbol = s.newNextToken();
+                	quads.insertQuad("INPUT", "-", "-", s.symbolTable.search(currentName, s.scope)+"");
                 } else {
-                	logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+                	logger.customError("ERROR -- EXPECTING IDENTIFIER", s);
                 }
             }
         } else {
-        	logger.customError("ERROR -- EXPECTING IDENTIFIER", s.line);
+        	logger.customError("ERROR -- EXPECTING IDENTIFIER", s);
         }
     }
     // end grammar -------------------------------------------------------------------------------------------------------------------------------------
@@ -726,7 +883,5 @@ public class Parser{
 
     public static void main(String[] args) throws Exception{
         Parser p = new Parser();
-        //p.quads.printQuads();
-        
     }
 }

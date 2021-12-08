@@ -1,4 +1,4 @@
- 
+package Scanner;  
 
 public class Exp {
 	public int type; // the data type of an expression

@@ -1,14 +1,12 @@
-program add;
-var n :integer;
-sum :integer;
-begin
-sum := 0;
-write('Enter numbers End with 999');
-read(n);
-while n <> 999 do
-    sum := sum + n;
-    write('n:' );
+program add; ! adds n numbers 
+var n, sum :integer;
+ begin sum := 0;
+  writeln('Enter numbers End with 999');
+   read(n); 
+   while n <> 999 do begin sum := sum + n;
+    write('n: '); 
     read(n);
-write('The sum is ');
-writeln(sum);
-end.
+     end; 
+    write ('The sum is '); 
+    write(sum); 
+    end.

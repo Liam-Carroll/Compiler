@@ -1,4 +1,4 @@
-
+package Scanner;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -12,7 +12,7 @@ public class runProgram {
 
         CompilerScanner scan = new CompilerScanner(fileName); 
 
-        checkSpaceStripping(scan);
+        //checkSpaceStripping(scan);
         runScannerTest(scan);
         input.close();
         

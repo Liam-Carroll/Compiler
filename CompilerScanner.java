@@ -1,4 +1,4 @@
- 
+package Scanner; 
 
 import java.io.*;
 import java.util.Scanner;
@@ -9,6 +9,7 @@ public class CompilerScanner
     private String[] reserved ={"program","var","integer","bool","procedure","call","begin","end","if","then","else","while","do","and","or","not","read","write","writeln"};
     public StringTable stringTable = new StringTable();
     public SymbolTable symbolTable = new SymbolTable();
+    public boolean isComment = false;
     
     File f;
     FileReader fileReader;
@@ -103,11 +104,12 @@ public class CompilerScanner
         boolean isNotInString = true;
         for(int i =0; i<stringPassed.length(); i++){
             currentChar=stringPassed.charAt(i);
-            if (currentChar == '\'') 
+            if (currentChar == '\'') {
             	isNotInString = isNotInString ? false : true;//toggle every time we see a quote
-            
+            }
+            	      
             if(currentChar =='!' && isNotInString){
-                   return newString;//ignore rest of string as it is commented out
+            	return newString;//ignore rest of string as it is commented out
             }
                    newString=newString+currentChar;
         }
@@ -164,16 +166,20 @@ public class CompilerScanner
         do{
             buf = buf + ch;
             ch = (char)br.read();//get the next character, ch
+            if (ch=='!')
+            	isComment = true;
+            
             state = fsm[state][charClass];
             charClass = getCategory(ch);
             ///Check end of line?y/n
             br.mark(1000); 
             if(br.read() == '\n'){
+            	isComment = false;
                 line++;
             }
             br.reset();
 
-        }while(fsm[state][charClass] > 0);
+        }while(fsm[state][charClass] > 0 || isComment);
         buf = removeSpacesAndComments(buf);
         if (!buf.equals("")) {
 //            throw new Exception(" buf equals nothing");
@@ -183,7 +189,11 @@ public class CompilerScanner
 	            error(tokenType, line);
 	            return null;
 	        }
-	        Token newToken = new Token(tokenType,0,buf);
+	        Token newToken;
+	        if (tokenType == T.NUMBER)
+	        	newToken = new Token(tokenType, Integer.parseInt(buf), buf);
+	        else
+	        	newToken = new Token(tokenType,symbolTable.currentAdd,buf);
 	        return newToken;
         } 
         return null;

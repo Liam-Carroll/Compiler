@@ -1,9 +1,10 @@
-
+package Scanner; 
 
 public class SymbolTable {
 	public SymbolTableObject[] table;
 	public int currentAdd;
 	public int tempNum = 0;
+	ErrorLogger logger = new ErrorLogger("ParserErrorLog.txt");
 	
 	/**
 	 * Default constructor
@@ -11,6 +12,16 @@ public class SymbolTable {
 	public SymbolTable() {
 		table = new SymbolTableObject[100];
 		currentAdd = 0;
+	}
+	
+	//Returns how many actual non null objects are in the array
+	public int contentSize() {
+		int counter = 0;
+		for (int i = 0; i < table.length; i++) {
+			if (table[i] != null)
+				counter++;
+		}
+		return counter;
 	}
 	
 	/**
@@ -21,10 +32,11 @@ public class SymbolTable {
 	 */
 	public int search(String name, int scope) {
 		for (int i = 0; i < table.length; i++) {
-			if (table[i].name.equals(name) && table[i].scope == scope) {
+			if (table[i] != null && table[i].name.equals(name) && table[i].scope == scope) {
 				return i;
 			}
 		}
+		//logger.customError("Error -- not found in search of symbol table", null);
 		return -1; // not found in table
 	}
 	
@@ -35,7 +47,7 @@ public class SymbolTable {
 	 * @return returns the location in the table (may already be stored in table)
 	 */
 	public int insert(String name, String kind, int type, int scope, String declared) {
-		SymbolTableObject newSymbol = new SymbolTableObject(name, kind, type, scope, declared);
+		SymbolTableObject newSymbol = new SymbolTableObject(name, kind, type, scope, declared, 0, -10, -10, 0);
 		for (int i = 0; i < table.length; i++) {
 			if (table[i] == null) {
 				table[i] = newSymbol;
@@ -47,7 +59,7 @@ public class SymbolTable {
 				return i;
 			}
 		}
-		System.out.println("ERROR");
+		logger.customError("ERROR in symbol table -- could not find empty location or already existing symbol", null);
 		return -1; // error, could not find empty location or already existing symbol
 	}
 	
@@ -59,7 +71,8 @@ public class SymbolTable {
 					"\t Kind: " + table[i].kind + 
 					"\t Type: " + table[i].type + 
 					"\t Scope: " + table[i].scope +
-					"\t Declared: " + table[i].declared);
+					"\t Declared: " + table[i].declared + 
+					"\t NumArgs: " + table[i].numArgs);
 		}
 	}
 	
@@ -70,6 +83,6 @@ public class SymbolTable {
 	public int getTemp() {
 		SymbolTableObject temp = new SymbolTableObject("@t" + tempNum);
 		tempNum++;
-		return insert(temp.name, temp.kind, temp.type, temp.scope, temp.declared);
+		return insert(temp.name, temp.kind, temp.type, temp.scope, "true");
 	}
 }

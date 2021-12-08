@@ -1,27 +1,15 @@
-program average;
+program basics;
 
-procedure getAverage(xinteger);
-var sum, grade, count, aveinteger;
-begin 
- sum=0;
- count=0;
- write('Enter grades End with 999n');
- read(grade);
- while grade  999 do 
- begin 
-  count=count + 1;
-  sum=sum + grade;
-  write('grade ');
-  read(grade);
- end;
- ave=sumcount;
- write('The average is ');
- write(ave);
- end;
+! just does basic arithmetic
 
-begin 
- 
- call getAverage(0);
+begin
+
+writeln(2+3+4);
+
+writeln(5%2);
+
+writeln(2*3 + 4*5);
+
+writeln(9+2*7-3);
 
 end.
- 

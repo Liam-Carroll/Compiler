@@ -1,15 +1,25 @@
-program Hanoi;var height : integer;procedure move( height, start, goal, extra : integer);begin if(height > 0) begin
-move (height-1, start, extra, goal);
-write(start);
-write('to');
-write(goal);
-write('\n');
-call move(height-1, extra, goal, start)
-end
-end;
+program Hanoi;
+var n, start, goal, extra:integer;
+procedure move( n, start, goal, extra : integer);
+var w:integer;
 begin 
-write('How many disks? ');
-read(height);
-call move(height,1,3,2);
-write('\n')
+if n >0 then
+begin
+call move(n-1, start, extra, goal);
+write(start);
+write( ' --> ' );
+write(goal);
+writeln(' ');
+call move(n-1, extra, goal, start);
+end;
+end;
+begin write('Enter number of disks' );
+read (n);
+write('Enter start' );
+read(start);
+write('Enter goal' );
+read(goal);
+write('Enter the extra' );
+read(extra);
+call move(n, start, goal, extra);
 end.
