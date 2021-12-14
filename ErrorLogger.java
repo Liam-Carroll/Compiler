@@ -54,7 +54,6 @@ public class ErrorLogger{
         String fullErrorString = errorString + " at line "+line;
         System.out.println(fullErrorString);
         log(fullErrorString);
-        //s.symbolTable.print();
         System.exit(0);//kill process after first error is logged
     }
 }

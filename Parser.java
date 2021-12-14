@@ -56,8 +56,7 @@ public class Parser{
                 variable_declarations();
 
                 int loc1 = quads.size(); //index of the next quad
-                System.out.println("JAJHIAADBHIASDASDASDBUHASDASD");
-                quads.insertQuad("BR", "-", "-", "BUTTHOLE"+(loc1+1)); //the 0 is a place holder
+                quads.insertQuad("BR", "-", "-", ""+(loc1+1)); //the 0 is a place holder
             
                 subprogram_declarations();
 
@@ -95,7 +94,7 @@ public class Parser{
         if (symbol.tokenType == T.IDENTIFIER) {
         	sem.start = s.symbolTable.currentAdd;
         	sem.count++;
-            symbol = s.newNextToken();//------------------------------
+            symbol = s.newNextToken();
             s.symbolTable.table[s.symbolTable.currentAdd].declared = "true";
             locals[s.scope]++; //for locals
         	s.symbolTable.table[s.symbolTable.currentAdd].offset = locals[s.scope];//sets the offset
@@ -121,8 +120,6 @@ public class Parser{
             symbol = s.newNextToken();
             Semantics sem = new Semantics();
             variable_declaration(sem);
-            System.out.println("Current Type: " + sem.type);
-            System.out.println("Sem Count: " + sem.count);
             for (int j = sem.start; j < (sem.start + sem.count); j++) {
             	quads.insertQuad("DCL", null, null, ""+j);
             	s.symbolTable.table[j].type = sem.type;
@@ -253,7 +250,6 @@ public class Parser{
             	s.symbolTable.table[j].kind = "PARAM";
 
             }
-            System.out.println("AFTER FOR LOOP NUMARGS-----------------------------: " + s.symbolTable.table[place].numArgs);
             while (symbol.tokenType == T.SEMI) {
             	symbol = s.newNextToken();
             	identifier_list(sem);
@@ -286,9 +282,7 @@ public class Parser{
     private void compound_statement() throws Exception {
         if (symbol.tokenType == T.BEGIN) {
             symbol = s.newNextToken();
-            System.out.println("Token from compound statemet going into statement_list: ---------------" + symbol.tokenType);
             statement_list();
-            System.out.println("Token after statementlist in compound_statement:" + symbol.tokenType);
             if (symbol.tokenType == T.END) {
                 symbol = s.newNextToken();
             }else{
@@ -302,7 +296,6 @@ public class Parser{
     
     private void statement_list() throws Exception{
         statement();
-        System.out.println("TOKEN COMING OUT OF STATEMENT IN STATEMENT LIST:" + symbol.tokenType);
         while(symbol.tokenType == T.SEMI) {
             symbol = s.newNextToken();
             statement();
@@ -313,7 +306,6 @@ public class Parser{
         if (symbol.tokenType == T.IDENTIFIER) {
         	if (!s.symbolTable.table[s.symbolTable.currentAdd].declared.equals("false")) { //maybe change back to !=? ------
         		assignment_statement();
-        		System.out.println("TOKEN AFTER STATEMENT ASSIGNMENT STATEMENT: " + symbol.tokenType);
         	} else {
         		logger.customError("ERROR -- var not declared", s);
         	}
@@ -353,7 +345,6 @@ public class Parser{
     			symbol = s.newNextToken();
     			Exp x = new Exp();
             	expression(x);
-            	System.out.println("Token after expressio i SHAHAHAHAHAHAHAHAHAH: " + symbol.tokenType);
             	
             	if (s.symbolTable.table[place].type != x.type) { // if theyre not the same then error. added extra info for debugging the help
             		logger.customError("ERROR -- table.type differs from x.type \n"
@@ -381,21 +372,18 @@ public class Parser{
         	symbol = s.newNextToken();
 
             Exp exp = new Exp();
-            System.out.println("Token before expression for then in if statementxxxxxxxxxxxx:" + symbol.tokenType);
         	expression(exp);
-        	System.out.println("Token before checking for then in if statementxxxxxxxxxxxxxxx:" + symbol.tokenType);
 
             if (exp.type != T.BOOL)
                 logger.customError("ERROR -- EXPECTING BOOL", s);
 
             loc1 = quads.size();
-            quads.insertQuad("BR0", exp.value+"", "-", "0");//ahhhhh
+            quads.insertQuad("BR0", exp.value+"", "-", "0");
 
         	if (symbol.tokenType == T.THEN) {
         		symbol = s.newNextToken();
         		statement();
-        		System.out.println("TOKEN AFTER STATEMENT IN IF STATEMENT IS: " + symbol.tokenType);
-        		symbol = s.newNextToken();//maybe remove this for checking stuff HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+        		symbol = s.newNextToken();
         		if (symbol.tokenType == T.ELSE) {
         			symbol = s.newNextToken();
 
@@ -449,7 +437,7 @@ public class Parser{
 
             	statement();
                 quads.insertQuad("BR", "-", "-", loc1+"");
-                //enter current quad number at loc2? ralph says this but idk what it means
+               
                 Quad temp = quads.quads.get(loc2);
                 temp.result = ""+ (quads.size());//maybe -1
                 quads.quads.set(loc2, temp);
@@ -469,7 +457,7 @@ public class Parser{
         	callCounter++;
         	symbol = s.newNextToken();
         	if (symbol.tokenType == T.IDENTIFIER) {
-        		s.symbolTable.table[symbol.value].declared = "true";//this fixes recursive programs but if it breaks it then ope ----------------------------------------------------------
+        		s.symbolTable.table[symbol.value].declared = "true";//this fixes recursive programs but if it breaks it then ?
         		name = symbol.name;
         		start = s.symbolTable.search(name, 0);
         		
@@ -482,8 +470,6 @@ public class Parser{
         				if (s.symbolTable.table[start].numArgs == paramCount) {
         					quads.insertQuad("CALL", start+"", paramCount+"","-");
         				} else {
-        					System.out.println("ParamCount: " + paramCount);
-        					System.out.println("ProcedureCount For Start Being " + start + ": " + s.symbolTable.table[start].numArgs);
         					logger.customError("ERROR -- ParamCount is not the same as argCount in procedure_statement() call", s);
         				}
         				
@@ -525,20 +511,18 @@ public class Parser{
     
     private void expression(Exp x) throws Exception {
     	simple_expression(x); // the Exp object,x, gets passed to simpleExpression
-    	System.out.println("CURRENT TOKEN IS------------------------------------: " + symbol.tokenType);
         if ((symbol.tokenType == T.LT) || (symbol.tokenType == T.GT) || (symbol.tokenType == T.EQUAL) || (symbol.tokenType == T.GE) || (symbol.tokenType == T.LE) || (symbol.tokenType == T.NE)) {
         	//Converts the tokenType to a String
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
         	Exp w = new Exp();
         	simple_expression(w);
-        	System.out.println("Token coming out of simp_exp in exp:AAAAAAAAAAA: " + symbol.tokenType);
         	
         	if (w.type != T.INTEGER) {
         		logger.customError("ERROR -- Expression call expecting an INTEGER", s);
         	} else {
         		int tempAddress = s.symbolTable.getTemp();
-        		s.symbolTable.table[tempAddress].type = T.INTEGER; //maybe needs to be bool? fuck
+        		s.symbolTable.table[tempAddress].type = T.INTEGER; //maybe needs to be bool? 
         		s.symbolTable.table[tempAddress].kind = "TEMP";
         		s.symbolTable.table[tempAddress].scope = s.scope;
         		locals[s.scope]++;
@@ -550,18 +534,15 @@ public class Parser{
         			xVal = "*"+x.value;
         		if (w.number)
         			wVal = "*"+w.value;
-        		System.out.println("OPCODE IS: " + opCode);
         		quads.insertQuad(convertValue(opCode), xVal, wVal, tempAddress+"");
         		x.type = T.BOOL;
         		x.value = tempAddress;
         		x.number = false;
-        		System.out.println("Token after inserting GT: " + symbol.tokenType);
         	}
         }
     }
     
     private void simple_expression(Exp x) throws Exception {
-    	System.out.println("Token going into simple_expression: " + symbol.tokenType);
     	if (symbol.tokenType == T.MINUS) {
     		symbol = s.newNextToken();
     	}
@@ -572,7 +553,6 @@ public class Parser{
     	Exp z = new Exp();
     	
         term(y);
-        System.out.println("Token coming out of term within simp_exp@@@@@2:" + symbol.tokenType);
         while ((symbol.tokenType == T.PLUS) || (symbol.tokenType == T.MINUS) || (symbol.tokenType == T.OR)) {
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
@@ -634,9 +614,7 @@ public class Parser{
     	Exp z = new Exp();
     	int tempAddress;
     	
-    	System.out.println("TOKEN GOING INTO OF FACTOR WITHIN TERM CALL--------------------------------------: " + symbol.tokenType);
         factor(y);
-        System.out.println("TOKEN COMING OUT OF FACTOR WITHIN TERM CALL--------------------------------------: " + symbol.tokenType);
         while ((symbol.tokenType == T.TIMES) || (symbol.tokenType == T.DIV)|| (symbol.tokenType == T.MOD) || (symbol.tokenType == T.AND)) {
         	int opCode = symbol.tokenType;
         	symbol = s.newNextToken();
@@ -644,9 +622,6 @@ public class Parser{
         	
         	type1 = y.type;
         	type2 = z.type;
-        	
-        	//System.out.println("---------------------------Type1: " + type1); //tests 
-        	//System.out.println("------------------------------Type2: " + type2);
         	
         	if (type1 != type2)
         		logger.customError("Error -- incompatable types", s);
@@ -704,7 +679,6 @@ public class Parser{
             if (!s.symbolTable.table[symbol.value].declared.equals("false")) { 
             	symbol.value = s.symbolTable.search(symbol.name, s.scope);
         		x.type = s.symbolTable.table[symbol.value].type; //symbol.value? correct or?
-        		//System.out.println("AHHHHHHHHHHHHHHHHHHHHH: " + s.symbolTable.table[symbol.value].kind);
         		x.value = symbol.value;
         		x.number = false;
         	} else { //id is not declared
@@ -819,7 +793,6 @@ public class Parser{
         	
         	quads.insertQuad("WRITE", "-", "-", stringLoc);
         } else if ((symbol.tokenType == T.MINUS) || (symbol.tokenType == T.IDENTIFIER) || (symbol.tokenType == T.NUMBER) || (symbol.tokenType == T.BOOL) || (symbol.tokenType == T.LPAREN) || (symbol.tokenType == T.NOT)) {
-        	System.out.println("SizeContent:" + s.symbolTable.contentSize());
         	Exp x = new Exp(); //ralph didnt put this on the sheet but expression needs an x so idk wtf he wants
         	expression(x);
         	quads.insertQuad("WRITE", "-", "-", x.value+"");//we had to make this ralph didnt give to us so may be wrong

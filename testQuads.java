@@ -1,4 +1,4 @@
-
+package Scanner;
 
 public class testQuads {
     public static void main(String[] args){

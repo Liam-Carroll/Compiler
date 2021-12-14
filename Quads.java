@@ -23,7 +23,6 @@ public class Quads {
         //add to quads arraylist
         quads.add(newQuad);
         System.out.println("Adding Quad: "+ newQuad.returnFullString());
-        //logger.log("Adding Quad: "+ newQuad.returnFullString()+"\n");
     }
     
     public void logQuads() {

@@ -12,7 +12,6 @@ public class runProgram {
 
         CompilerScanner scan = new CompilerScanner(fileName); 
 
-        //checkSpaceStripping(scan);
         runScannerTest(scan);
         input.close();
         
